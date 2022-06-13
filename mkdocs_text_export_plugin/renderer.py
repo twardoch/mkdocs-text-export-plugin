@@ -6,7 +6,6 @@ from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 import logging
 
-# from weasyprint import HTML
 from html2text import HTML2Text
 import bs4
 
@@ -17,34 +16,28 @@ from .preprocessor import get_separate as prep_separate, get_combined as prep_co
 class Renderer(object):
     def __init__(self,
         combined: bool,
-        theme: str,
-        theme_handler_path: str = None,
-        plain_headings: bool = False,
+        markdown: bool = False,
         plain_tables: bool = False,
-        plain_lists: bool = False,
-        ul_item_mark: str = "",
         open_quote: str = "“",
         close_quote: str = "”",
         default_image_alt: str = "",
         hide_strikethrough: bool = False,
-        single_line_break: bool = False,
         kill_tags: list = [],
+        theme: str,
+        theme_handler_path: str = None,
         ):
-        self.theme = self._load_theme_handler(theme, theme_handler_path)
         self.combined = combined
         self.page_order = []
         self.pgnum = 0
         self.pages = []
-        self.plain_headings = plain_headings
+        self.markdown = markdown
         self.plain_tables = plain_tables
-        self.plain_lists = plain_lists
-        self.ul_item_mark = ul_item_mark
         self.open_quote = open_quote
         self.close_quote = close_quote
         self.default_image_alt = default_image_alt
         self.hide_strikethrough = hide_strikethrough
-        self.single_line_break = single_line_break
         self.kill_tags = kill_tags
+        self.theme = self._load_theme_handler(theme, theme_handler_path)
 
     def write_txt(self, content: str, base_url: str, filename: str):
         Path(filename).write_text(self.render_doc(content, base_url))
@@ -66,13 +59,13 @@ class Renderer(object):
             soup = prep_separate(soup, base_url)
 
         for tag in soup.find_all(True):
-            if self.plain_headings and tag.name in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+            if self.markdown and tag.name in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
                 tag.replace_with(soup.new_tag("p"))
             if tag.name in ('mark', 'kbd'):
                 tag.replace_with(tag.get_text(''))
             if self.plain_tables and tag.name in ('table'):
                 tag.replace_with(tag.get_text(' '))
-            if self.plain_lists:
+            if self.markdown:
                 if tag.name in ('ul', 'ol'):
                     tag.replace_with(soup.new_tag("div"))
                 if tag.name in ('li'):
@@ -85,35 +78,33 @@ class Renderer(object):
         html.bypass_tables = False
         html.close_quote = self.close_quote
         html.default_image_alt = self.default_image_alt
-        html.emphasis_mark = ""
+        html.emphasis_mark = "_" if self.markdown else ""
         html.escape_snob = False
         html.google_doc = False
         html.google_list_indent = 0
+        html.blockquote = 1 if self.markdown else 0
         html.hide_strikethrough = self.hide_strikethrough
-        html.ignore_emphasis = True
-        html.ignore_images = False
-        html.ignore_links = True
-        html.ignore_mailto_links = True
-        html.ignore_tables = True
+        html.ignore_emphasis = True if self.markdown else False
+        html.ignore_images = True if self.markdown else False
+        html.ignore_links = True if self.markdown else False
+        html.ignore_mailto_links = True if self.markdown else False
+        html.ignore_tables = True if self.markdown else False
         html.images_as_html = False
         html.images_to_alt = True
         html.images_with_size = False
-        html.inline_links = True
+        html.inline_links = True if self.markdown else False
         html.links_each_paragraph = False
         html.mark_code = False
         html.open_quote = self.open_quote
-        html.pad_tables = False
+        html.pad_tables = True if self.markdown else False
         html.protect_links = True
-        html.single_line_break = self.single_line_break
-        html.skip_internal_links = True
-        html.split_next_td = False
-        html.strong_mark = ""
-        html.table_start = False
+        html.single_line_break = False
+        html.skip_internal_links = False if self.markdown else True
+        html.strong_mark = "**" if self.markdown else ""
         html.tag_callback = None
-        html.td_count = 0
-        html.ul_item_mark = self.ul_item_mark
+        html.ul_item_mark = "-" if self.markdown else ""
         html.unicode_snob = True
-        html.use_automatic_links = False
+        html.use_automatic_links = True if self.markdown else False
         html.wrap_links = False
         html.wrap_list_items = False
         html.wrap_tables = False

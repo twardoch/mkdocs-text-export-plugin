@@ -6,27 +6,23 @@ from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
 
 
-class TxtExportPlugin(BasePlugin):
+class MdTxtExportPlugin(BasePlugin):
 
-    DEFAULT_MEDIA_TYPE = "print"
 
     config_scheme = (
-        ("media_type", config_options.Type(str, default=DEFAULT_MEDIA_TYPE)),
         ("verbose", config_options.Type(bool, default=False)),
         ("enabled_if_env", config_options.Type(str)),
+        ("markdown", config_options.Type(bool, default=False)),
         ("combined", config_options.Type(bool, default=False)),
         ("combined_output_path", config_options.Type(str, default="pdf/combined.pdf")),
-        ("theme_handler_path", config_options.Type(str)),
-        ("plain_headings", config_options.Type(bool, default=False)),
         ("plain_tables", config_options.Type(bool, default=False)),
-        ("plain_lists", config_options.Type(bool, default=False)),
-        ("ul_item_mark", config_options.Type(str, default="")),
         ("open_quote", config_options.Type(str, default="“")),
         ("close_quote", config_options.Type(str, default="”")),
         ("default_image_alt", config_options.Type(str, default="")),
         ("hide_strikethrough", config_options.Type(bool, default=False)),
-        ("single_line_break", config_options.Type(bool, default=False)),
         ("kill_tags", config_options.Type(list, default=[])),
+        ("theme", config_options.Type(str)),
+        ("theme_handler_path", config_options.Type(str)),
     )
 
     def __init__(self):
@@ -72,18 +68,15 @@ class TxtExportPlugin(BasePlugin):
 
         self.renderer = Renderer(
             combined=self.combined,
-            theme=config["theme"].name,
-            theme_handler_path=self.config["theme_handler_path"],
-            plain_headings=self.config["plain_headings"],
+            markdown=self.markdown,
             plain_tables=self.config["plain_tables"],
-            plain_lists=self.config["plain_lists"],
-            ul_item_mark=self.config["ul_item_mark"],
             open_quote=self.config["open_quote"],
             close_quote=self.config["close_quote"],
             default_image_alt=self.config["default_image_alt"],
             hide_strikethrough=self.config["hide_strikethrough"],
-            single_line_break=self.config["single_line_break"],
             kill_tags=self.config["kill_tags"],
+            theme=config["theme"].name,
+            theme_handler_path=self.config["theme_handler_path"],
         )
 
         self.renderer.pages = [None] * len(nav.pages)
@@ -113,7 +106,8 @@ class TxtExportPlugin(BasePlugin):
 
         filename = os.path.splitext(os.path.basename(src_path))[0]
 
-        base_url = os.path.join(path, filename)
+        from weasyprint import urls
+        base_url = urls.path2url(os.path.join(path, filename))
         pdf_file = f"{filename}.txt"
 
         try:
