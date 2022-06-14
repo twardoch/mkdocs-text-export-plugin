@@ -14,7 +14,7 @@ class MdTxtExportPlugin(BasePlugin):
         ("enabled_if_env", config_options.Type(str)),
         ("markdown", config_options.Type(bool, default=False)),
         ("combined", config_options.Type(bool, default=False)),
-        ("combined_output_path", config_options.Type(str, default="pdf/combined.pdf")),
+        ("combined_output_path", config_options.Type(str, default="text/combined")),
         ("plain_tables", config_options.Type(bool, default=False)),
         ("open_quote", config_options.Type(str, default="“")),
         ("close_quote", config_options.Type(str, default="”")),
@@ -29,6 +29,7 @@ class MdTxtExportPlugin(BasePlugin):
         self.renderer = None
         self.enabled = True
         self.combined = False
+        self.file_ext = ".txt"
         self.num_files = 0
         self.num_errors = 0
         self.total_time = 0
@@ -39,14 +40,16 @@ class MdTxtExportPlugin(BasePlugin):
                 self.enabled = os.environ.get(env_name) == "1"
                 if not self.enabled:
                     print(
-                        f"PDF export is disabled (set environment variable {env_name} to 1 to enable)"
+                        f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
                     )
 
                     return
 
+        if self.markdown:
+            self.file_ext = ".md"
         self.combined = self.config["combined"]
         if self.combined:
-            print("Combined PDF export is enabled")
+            print("Combined export is enabled")
 
         import logging
         log = logging.getLogger(__name__)
@@ -135,7 +138,6 @@ class MdTxtExportPlugin(BasePlugin):
 
         if self.combined:
             start = timer()
-
             abs_pdf_path = os.path.join(
                 config["site_dir"], self.config["combined_output_path"]
             )
