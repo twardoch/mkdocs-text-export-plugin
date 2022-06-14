@@ -62,15 +62,23 @@ class Renderer(object):
             if self.plain_tables and tag.name == "table":
                 rows = []
                 for tr in tag.find_all("tr"):
-                    cells = []
-                    for td in tr.find_all(["th", "td"]):
-                        cells.append(td.get_text(" "))
+                    cells = [td.get_text(" ") for td in tr.find_all(["th", "td"])]
                     rows.append(", ".join(cells))
                 tag.replace_with(". ".join(rows))
             if not self.markdown:
                 if tag.name in ("ul", "ol", "blockquote", "figure"):
                     tag.name = "div"
-                elif tag.name in ("label", "h1", "h2", "h3", "h4", "h5", "h6", "figcaption", "li"):
+                elif tag.name in (
+                    "label",
+                    "h1",
+                    "h2",
+                    "h3",
+                    "h4",
+                    "h5",
+                    "h6",
+                    "figcaption",
+                    "li",
+                ):
                     tag.name = "p"
                 elif tag.name in ("code"):
                     tag.name = "q"
@@ -88,7 +96,7 @@ class Renderer(object):
         html.escape_snob = False
         html.google_doc = False
         html.google_list_indent = 0
-        #html.blockquote = 1 if self.markdown else 0
+        # html.blockquote = 1 if self.markdown else 0
         html.hide_strikethrough = self.hide_strikethrough
         html.ignore_emphasis = not self.markdown
         html.ignore_images = not self.markdown
@@ -119,7 +127,6 @@ class Renderer(object):
     def add_doc(self, content: str, base_url: str, rel_url: str):
         pos = self.page_order.index(rel_url)
         self.pages[pos] = (content, base_url, rel_url)
-
 
     def add_link(self, content: str, filename: str):
         return self.theme.modify_html(content, filename)
@@ -152,13 +159,12 @@ class Renderer(object):
                 spec.loader.exec_module(mod)
                 return mod
             except FileNotFoundError as e:
-                print(
-                    f'Could not load theme handler {theme} from custom directory "{custom_handler_path}": {e}',
-                    file=sys.stderr,
+                logging.warn(
+                    f'Could not load theme handler {theme} from custom directory "{custom_handler_path}": {e}'
                 )
 
         try:
-            return import_module(module_name, "mkdocs_txt_export_plugin.themes")
+            return import_module(module_name, "mkdocs_text_export_plugin.themes")
         except ImportError as e:
-            print(f"Could not load theme handler {theme}: {e}", file=sys.stderr)
+            logging.warn(f"Could not load theme handler {theme}: {e}")
             return generic_theme

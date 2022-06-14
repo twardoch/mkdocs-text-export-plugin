@@ -4,6 +4,7 @@ from timeit import default_timer as timer
 
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
+import logging
 
 
 class MdTxtExportPlugin(BasePlugin):
@@ -36,7 +37,7 @@ class MdTxtExportPlugin(BasePlugin):
             if env_name := self.config["enabled_if_env"]:
                 self.enabled = os.environ.get(env_name) == "1"
                 if not self.enabled:
-                    print(
+                    logging.warn(
                         f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
                     )
 
@@ -114,7 +115,7 @@ class MdTxtExportPlugin(BasePlugin):
             )
             output_content = self.renderer.add_link(output_content, txt_file)
         except Exception as e:
-            print(f"Error converting {src_path} to text: {e}", file=sys.stderr)
+            logging.error(f"Error converting {src_path} to text: {e}")
             self.num_errors += 1
 
         end = timer()
@@ -126,11 +127,11 @@ class MdTxtExportPlugin(BasePlugin):
         if not self.enabled:
             return
 
-        print(
+        logging.info(
             "Converting {} files to text took {:.1f}s".format(
                 self.num_files, self.total_time
             )
         )
         if self.num_errors > 0:
-            print(f"{self.num_errors} conversion errors occurred (see above)")
+            logging.error(f"{self.num_errors} conversion errors occurred (see above)")
 
