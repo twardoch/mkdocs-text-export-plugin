@@ -9,9 +9,9 @@ def modify_html(html: str, href: str) -> str:
 
     sm_wrapper = soup.new_tag('small')
 
-    a = soup.new_tag('a', href=href, title='PDF Export', download=None)
-    a['class'] = 'pdf-download'
-    a.string = 'Download PDF'
+    a = soup.new_tag('a', href=href, title='Text export', download=None)
+    a['class'] = 'txt-download'
+    a.string = 'Open text'
 
     sm_wrapper.append(a)
     soup.body.footer.insert(0, sm_wrapper)

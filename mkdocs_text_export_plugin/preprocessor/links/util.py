@@ -4,7 +4,7 @@ from weasyprint import urls
 from bs4 import BeautifulSoup
 
 # check if href is relative --
-# if it is relative it *should* be an html that generates a PDF doc
+# if it is relative it *should* be an html that generates a text file
 def is_doc(href: str):
     tail = os.path.basename(href)
     _, ext = os.path.splitext(tail)
@@ -14,10 +14,10 @@ def is_doc(href: str):
     htmlfile = ext.startswith('.html')
     if absurl or abspath or not htmlfile:
         return False
-    
+
     return True
-    
-def rel_pdf_href(href: str):
+
+def rel_txt_href(href: str, file_ext: str = '.txt'):
     head, tail = os.path.split(href)
     filename, _ = os.path.splitext(tail)
 
@@ -25,7 +25,7 @@ def rel_pdf_href(href: str):
     if not is_doc(href) or internal:
         return href
 
-    return urls.iri_to_uri(os.path.join(head, f'{filename}.pdf'))
+    return urls.iri_to_uri(os.path.join(head, f'{filename}.{file_ext}'))
 
 def abs_asset_href(href: str, base_url: str):
     if urls.url_is_absolute(href) or os.path.isabs(href):
@@ -40,7 +40,7 @@ def replace_asset_hrefs(soup: BeautifulSoup, base_url: str):
 
     for asset in soup.find_all(src=True):
         asset['src'] = abs_asset_href(asset['src'], base_url)
-    
+
     return soup
 
 # normalize href to site root
@@ -65,6 +65,3 @@ def normalize_href(href: str, rel_url: str):
 
     return os.path.join(*href)
 
-def get_body_id(url: str):
-    section, _ = os.path.splitext(url)
-    return f'{section}:'

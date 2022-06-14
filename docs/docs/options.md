@@ -7,7 +7,7 @@ plugins:
     - pdf-export:
         verbose: true
         media_type: print
-        enabled_if_env: ENABLE_PDF_EXPORT
+        enabled_if_env: ENABLE_TXT_EXPORT
 ```
 
 ### `verbose`

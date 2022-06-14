@@ -9,7 +9,7 @@ def modify_html(html: str, href: str) -> str:
     soup = BeautifulSoup(html, 'html.parser')
 
     if soup.head:
-        link = soup.new_tag('link', href=href, rel='alternate', title='PDF Export', type='application/pdf')
+        link = soup.new_tag('link', href=href, rel='alternate', title='Text export')
         soup.head.append(link)
 
     return str(soup)

@@ -10,12 +10,14 @@ from html2text import HTML2Text
 import bs4
 
 from .themes import generic as generic_theme
-from .preprocessor import get_separate as prep_separate, get_combined as prep_combined
+from .preprocessor import get_separate as prep_separate
 
 
 class Renderer(object):
-    def __init__(self,
-        combined: bool,
+    def __init__(
+        self,
+        theme: str,
+        theme_handler_path: str = None,
         markdown: bool = False,
         plain_tables: bool = False,
         open_quote: str = "“",
@@ -23,10 +25,8 @@ class Renderer(object):
         default_image_alt: str = "",
         hide_strikethrough: bool = False,
         kill_tags: list = [],
-        theme: str,
-        theme_handler_path: str = None,
-        ):
-        self.combined = combined
+        file_ext: str = "txt",
+    ):
         self.page_order = []
         self.pgnum = 0
         self.pages = []
@@ -38,6 +38,7 @@ class Renderer(object):
         self.hide_strikethrough = hide_strikethrough
         self.kill_tags = kill_tags
         self.theme = self._load_theme_handler(theme, theme_handler_path)
+        self.file_ext = file_ext
 
     def write_txt(self, content: str, base_url: str, filename: str):
         Path(filename).write_text(self.render_doc(content, base_url))
@@ -53,26 +54,31 @@ class Renderer(object):
 
             soup.head.append(style_tag)
 
-        if self.combined:
-            soup = prep_combined(soup, base_url, rel_url)
-        else:
-            soup = prep_separate(soup, base_url)
+        soup = prep_separate(soup, base_url, self.file_ext)
 
         for tag in soup.find_all(True):
-            if self.markdown and tag.name in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-                tag.replace_with(soup.new_tag("p"))
-            if tag.name in ('mark', 'kbd'):
-                tag.replace_with(tag.get_text(''))
-            if self.plain_tables and tag.name in ('table'):
-                tag.replace_with(tag.get_text(' '))
-            if self.markdown:
-                if tag.name in ('ul', 'ol'):
-                    tag.replace_with(soup.new_tag("div"))
-                if tag.name in ('li'):
-                    tag.replace_with(soup.new_tag("p"))
-            if tag.name in (self.kill_tags):
-                tag.replace_with('')
+            if tag.name in ("mark", "kbd"):
+                tag.replace_with(tag.get_text(""))
+            if self.plain_tables and tag.name == "table":
+                rows = []
+                for tr in tag.find_all("tr"):
+                    cells = []
+                    for td in tr.find_all(["th", "td"]):
+                        cells.append(td.get_text(" "))
+                    rows.append(", ".join(cells))
+                tag.replace_with(". ".join(rows))
+            if not self.markdown:
+                if tag.name in ("ul", "ol", "blockquote", "figure"):
+                    tag.name = "div"
+                elif tag.name in ("label", "h1", "h2", "h3", "h4", "h5", "h6", "figcaption", "li"):
+                    tag.name = "p"
+                elif tag.name in ("code"):
+                    tag.name = "q"
+        for kill_tag in self.kill_tags:
+            for tag in soup.select(kill_tag):
+                tag.replace_with("")
 
+        # return str(soup)
         html = HTML2Text()
         html.body_width = 0
         html.bypass_tables = False
@@ -82,29 +88,29 @@ class Renderer(object):
         html.escape_snob = False
         html.google_doc = False
         html.google_list_indent = 0
-        html.blockquote = 1 if self.markdown else 0
+        #html.blockquote = 1 if self.markdown else 0
         html.hide_strikethrough = self.hide_strikethrough
-        html.ignore_emphasis = True if self.markdown else False
-        html.ignore_images = True if self.markdown else False
-        html.ignore_links = True if self.markdown else False
-        html.ignore_mailto_links = True if self.markdown else False
-        html.ignore_tables = True if self.markdown else False
+        html.ignore_emphasis = not self.markdown
+        html.ignore_images = not self.markdown
+        html.ignore_links = not self.markdown
+        html.ignore_mailto_links = not self.markdown
+        html.ignore_tables = not self.markdown
         html.images_as_html = False
-        html.images_to_alt = True
+        html.images_to_alt = not self.markdown
         html.images_with_size = False
-        html.inline_links = True if self.markdown else False
+        html.inline_links = bool(self.markdown)
         html.links_each_paragraph = False
         html.mark_code = False
         html.open_quote = self.open_quote
-        html.pad_tables = True if self.markdown else False
+        html.pad_tables = bool(self.markdown)
         html.protect_links = True
         html.single_line_break = False
-        html.skip_internal_links = False if self.markdown else True
+        html.skip_internal_links = not self.markdown
         html.strong_mark = "**" if self.markdown else ""
         html.tag_callback = None
         html.ul_item_mark = "-" if self.markdown else ""
         html.unicode_snob = True
-        html.use_automatic_links = True if self.markdown else False
+        html.use_automatic_links = bool(self.markdown)
         html.wrap_links = False
         html.wrap_list_items = False
         html.wrap_tables = False
@@ -114,21 +120,6 @@ class Renderer(object):
         pos = self.page_order.index(rel_url)
         self.pages[pos] = (content, base_url, rel_url)
 
-    def write_combined_pdf(self, output_path: str):
-        rendered_pages = []
-        for p in self.pages:
-            if p is None:
-                print("Unexpected error - not all pages were rendered properly")
-                continue
-
-            render = self.render_doc(p[0], p[1], p[2])
-            self.pgnum += len(render.pages)
-            rendered_pages.append(render)
-
-        flatten = lambda l: [item for sublist in l for item in sublist]
-        all_pages = flatten([p.pages for p in rendered_pages if p != None])
-
-        rendered_pages[0].copy(all_pages).write_txt(output_path)
 
     def add_link(self, content: str, filename: str):
         return self.theme.modify_html(content, filename)
@@ -167,7 +158,7 @@ class Renderer(object):
                 )
 
         try:
-            return import_module(module_name, "mkdocs_pdf_export_plugin.themes")
+            return import_module(module_name, "mkdocs_txt_export_plugin.themes")
         except ImportError as e:
             print(f"Could not load theme handler {theme}: {e}", file=sys.stderr)
             return generic_theme

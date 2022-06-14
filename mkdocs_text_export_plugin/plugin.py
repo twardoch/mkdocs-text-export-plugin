@@ -13,23 +13,20 @@ class MdTxtExportPlugin(BasePlugin):
         ("verbose", config_options.Type(bool, default=False)),
         ("enabled_if_env", config_options.Type(str)),
         ("markdown", config_options.Type(bool, default=False)),
-        ("combined", config_options.Type(bool, default=False)),
-        ("combined_output_path", config_options.Type(str, default="text/combined")),
         ("plain_tables", config_options.Type(bool, default=False)),
         ("open_quote", config_options.Type(str, default="“")),
         ("close_quote", config_options.Type(str, default="”")),
         ("default_image_alt", config_options.Type(str, default="")),
         ("hide_strikethrough", config_options.Type(bool, default=False)),
         ("kill_tags", config_options.Type(list, default=[])),
-        ("theme", config_options.Type(str)),
         ("theme_handler_path", config_options.Type(str)),
     )
 
     def __init__(self):
         self.renderer = None
         self.enabled = True
-        self.combined = False
-        self.file_ext = ".txt"
+        self.markdown = False
+        self.file_ext = "txt"
         self.num_files = 0
         self.num_errors = 0
         self.total_time = 0
@@ -45,11 +42,9 @@ class MdTxtExportPlugin(BasePlugin):
 
                     return
 
+        self.markdown = self.config["markdown"]
         if self.markdown:
-            self.file_ext = ".md"
-        self.combined = self.config["combined"]
-        if self.combined:
-            print("Combined export is enabled")
+            self.file_ext = "md"
 
         import logging
         log = logging.getLogger(__name__)
@@ -70,7 +65,8 @@ class MdTxtExportPlugin(BasePlugin):
         from .renderer import Renderer
 
         self.renderer = Renderer(
-            combined=self.combined,
+            theme=config["theme"].name,
+            theme_handler_path=self.config["theme_handler_path"],
             markdown=self.markdown,
             plain_tables=self.config["plain_tables"],
             open_quote=self.config["open_quote"],
@@ -78,8 +74,7 @@ class MdTxtExportPlugin(BasePlugin):
             default_image_alt=self.config["default_image_alt"],
             hide_strikethrough=self.config["hide_strikethrough"],
             kill_tags=self.config["kill_tags"],
-            theme=config["theme"].name,
-            theme_handler_path=self.config["theme_handler_path"],
+            file_ext=self.file_ext,
         )
 
         self.renderer.pages = [None] * len(nav.pages)
@@ -111,20 +106,15 @@ class MdTxtExportPlugin(BasePlugin):
 
         from weasyprint import urls
         base_url = urls.path2url(os.path.join(path, filename))
-        pdf_file = f"{filename}.txt"
+        txt_file = f"{filename}.{self.file_ext}"
 
         try:
-            if self.combined:
-                self.renderer.add_doc(output_content, base_url, page.file.url)
-                pdf_path = self.get_path_to_pdf_from(page.file.dest_path)
-                output_content = self.renderer.add_link(output_content, pdf_path)
-            else:
-                self.renderer.write_txt(
-                    output_content, base_url, os.path.join(path, pdf_file)
-                )
-                output_content = self.renderer.add_link(output_content, pdf_file)
+            self.renderer.write_txt(
+                output_content, base_url, os.path.join(path, txt_file)
+            )
+            output_content = self.renderer.add_link(output_content, txt_file)
         except Exception as e:
-            print(f"Error converting {src_path} to PDF: {e}", file=sys.stderr)
+            print(f"Error converting {src_path} to text: {e}", file=sys.stderr)
             self.num_errors += 1
 
         end = timer()
@@ -136,27 +126,11 @@ class MdTxtExportPlugin(BasePlugin):
         if not self.enabled:
             return
 
-        if self.combined:
-            start = timer()
-            abs_pdf_path = os.path.join(
-                config["site_dir"], self.config["combined_output_path"]
-            )
-            os.makedirs(os.path.dirname(abs_pdf_path), exist_ok=True)
-            self.renderer.write_combined_pdf(abs_pdf_path)
-
-            end = timer()
-            self.total_time += end - start
-
         print(
-            "Converting {} files to PDF took {:.1f}s".format(
+            "Converting {} files to text took {:.1f}s".format(
                 self.num_files, self.total_time
             )
         )
         if self.num_errors > 0:
             print(f"{self.num_errors} conversion errors occurred (see above)")
 
-    def get_path_to_pdf_from(self, start):
-        pdf_split = os.path.split(self.config["combined_output_path"])
-        start_dir = os.path.split(start)[0]
-        pdf_dir = pdf_split[0] or "."
-        return os.path.join(os.path.relpath(pdf_dir, start_dir), pdf_split[1])
