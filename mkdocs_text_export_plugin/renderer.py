@@ -45,14 +45,14 @@ class Renderer(object):
 
     def render_doc(self, content: str, base_url: str = ""):
         return html22text(
-            content=content,
+            html=content,
             markdown=self.markdown,
             base_url=base_url,
             plain_tables=self.plain_tables,
             open_quote=self.open_quote,
             close_quote=self.close_quote,
             default_image_alt=self.default_image_alt,
-            hide_strikethrough=self.hide_strikethrough,
+            kill_strikethrough=self.hide_strikethrough,
             kill_tags=self.kill_tags,
             file_ext=self.file_ext,
         )
