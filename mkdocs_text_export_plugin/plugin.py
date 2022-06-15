@@ -1,5 +1,4 @@
 import os
-import sys
 from timeit import default_timer as timer
 
 from mkdocs.config import config_options

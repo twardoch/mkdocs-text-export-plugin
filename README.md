@@ -1,4 +1,4 @@
-# mkdocs-plugin-toplaintext
+# mkdocs-text-export-plugin
 
 MkDocs plugin to convert the pages to Markdown or plain text.
 

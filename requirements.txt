@@ -1,4 +1,2 @@
-beautifulsoup4>=4.11.1
-html2text>=2020.1.16
 mkdocs>=1.3.0
-weasyprint>=55.0
+git+https://github.com/twardoch/html22text
