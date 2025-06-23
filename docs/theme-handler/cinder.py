@@ -77,7 +77,9 @@ def modify_html(html: str, href: str) -> str:
         soup.head.append(link_tag)
     else:
         # This case should be rare for valid MkDocs pages
-        print(f"WARNING: Custom theme handler: No <head> tag found in page to add alternate link.")
+        print(
+            "WARNING: Custom theme handler: No <head> tag found in page to add alternate link."
+        )
 
     return str(soup)
 
