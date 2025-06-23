@@ -1,44 +1,38 @@
-from email.mime import base
-import sys
 import os
 from pathlib import Path
 from importlib import import_module
 from importlib.util import spec_from_file_location, module_from_spec
 import logging
 
-
-from html2text import HTML2Text
-import bs4
-
+from html22text import html22text # type: ignore
 from .themes import generic as generic_theme
-from html22text import html22text
 
 
 class Renderer(object):
     def __init__(
         self,
         theme: str,
-        theme_handler_path: str = None,
+        theme_handler_path: str = None, # type: ignore
         markdown: bool = False,
         plain_tables: bool = False,
         open_quote: str = "“",
         close_quote: str = "”",
         default_image_alt: str = "",
         hide_strikethrough: bool = False,
-        kill_tags: list = [],
+        kill_tags: list = [], # type: ignore
         file_ext: str = "txt",
     ):
-        self.page_order = []
-        self.pages = []
-        self.markdown = markdown
-        self.plain_tables = plain_tables
-        self.open_quote = open_quote
-        self.close_quote = close_quote
-        self.default_image_alt = default_image_alt
-        self.hide_strikethrough = hide_strikethrough
-        self.kill_tags = kill_tags
+        self.page_order: list = []
+        self.pages: list = []
+        self.markdown: bool = markdown
+        self.plain_tables: bool = plain_tables
+        self.open_quote: str = open_quote
+        self.close_quote: str = close_quote
+        self.default_image_alt: str = default_image_alt
+        self.hide_strikethrough: bool = hide_strikethrough
+        self.kill_tags: list = kill_tags
         self.theme = self._load_theme_handler(theme, theme_handler_path)
-        self.file_ext = file_ext
+        self.file_ext: str = file_ext
 
     def write_txt(self, content: str, base_url: str, filename: str):
         Path(filename).write_text(self.render_doc(content, base_url))
@@ -65,7 +59,7 @@ class Renderer(object):
         return self.theme.modify_html(content, filename)
 
     @staticmethod
-    def _load_theme_handler(theme: str, custom_handler_path: str = None):
+    def _load_theme_handler(theme: str, custom_handler_path: str = None): # type: ignore
         module_name = "." + (theme or "generic").replace("-", "_")
 
         if custom_handler_path:
@@ -73,16 +67,16 @@ class Renderer(object):
                 spec = spec_from_file_location(
                     module_name, os.path.join(os.getcwd(), custom_handler_path)
                 )
-                mod = module_from_spec(spec)
-                spec.loader.exec_module(mod)
+                mod = module_from_spec(spec) # type: ignore
+                spec.loader.exec_module(mod) # type: ignore
                 return mod
             except FileNotFoundError as e:
-                logging.warn(
+                logging.warning(
                     f'Could not load theme handler {theme} from custom directory "{custom_handler_path}": {e}'
                 )
 
         try:
             return import_module(module_name, "mkdocs_text_export_plugin.themes")
         except ImportError as e:
-            logging.warn(f"Could not load theme handler {theme}: {e}")
+            logging.warning(f"Could not load theme handler {theme}: {e}")
             return generic_theme

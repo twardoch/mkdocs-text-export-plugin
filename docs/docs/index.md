@@ -1,45 +1,61 @@
-# MkDocs PDF Export Plugin <span class="noprint">[![Build Status](https://travis-ci.org/zhaoterryy/mkdocs-pdf-export-plugin.svg?branch=master)](https://travis-ci.org/zhaoterryy/mkdocs-pdf-export-plugin)</span>
+# MkDocs Text Export Plugin
 
-The pdf-export plugin will export all markdown pages in your MkDocs repository as PDF files using [WeasyPrint](http://weasyprint.org/). The exported documents support many advanced features missing in most other PDF exports, such as a PDF Index and support for [CSS paged media module](https://developer.mozilla.org/en-US/docs/Web/CSS/@page).
+Welcome to the documentation for the `mkdocs-text-export-plugin`. This plugin allows you to export your MkDocs pages to either plain text or simplified Markdown format.
 
-- MkDocs >= 1.0
-- Python >= 3.4
-- WeasyPrint >= 44
+## Overview
+
+The plugin works by taking the final HTML rendered by MkDocs (after all other plugins have done their work) and converting it. This is particularly useful for:
+
+- Generating plain text versions of your site for Natural Language Processing (NLP), indexing, or accessibility.
+- Creating simplified Markdown versions that are stripped of complex MkDocs-specific syntax or HTML, which can be useful for content migration or re-purposing.
+
+It uses the [`html22text`](https://github.com/twardoch/html22text) library for the core conversion and allows for theme-specific adjustments via [Custom Theme Handlers](theme_handlers.md).
+
+## Key Features
+
+- Export to plain text (`.txt`) or Markdown (`.md`).
+- Configurable options for fine-tuning the output.
+- Ability to use custom theme handlers for precise control over HTML pre-processing.
+- Option to enable/disable the plugin via an environment variable.
 
 ## Installation
 
-Install the package with pip:
+Install the plugin from PyPI using pip:
 
 ```bash
-pip install mkdocs-pdf-export-plugin
+pip install mkdocs-text-export-plugin
 ```
 
-Enable the plugin in your `mkdocs.yml`:
+Then, add the plugin to your `mkdocs.yml` file. It's recommended to place it late in the plugin list:
 
 ```yaml
 plugins:
-    - search
-    - pdf-export
+  - search # Example
+  # - other_plugins_you_use
+  - text-export
 ```
 
-> **Note:** If you have no `plugins` entry in your config file yet, you'll likely also want to add the `search` plugin. MkDocs enables it by default if there is no `plugins` entry set, but now you have to enable it explicitly.
+> **Note:** If you have no `plugins` entry in your config file yet, you'll likely also want to add the `search` plugin. MkDocs enables it by default if there is no `plugins` entry set, but now you have to enable it explicitly if you add a `plugins` section.
 
-More information about plugins in the [MkDocs documentation](http://www.mkdocs.org/user-guide/plugins/).
+For detailed configuration, see the [Configuration Options](options.md) page.
+
+## Requirements
+
+- Python >= 3.10
+- MkDocs >= 1.3.0 (though likely works with >=1.0)
+- Key dependencies: `html22text`, `beautifulsoup4`
 
 ## Contributing
 
-From reporting a bug to submitting a pull request: every contribution is appreciated and welcome. Report bugs, ask questions and request features using [Github issues][github-issues].
+Contributions are welcome! Please refer to the main [README.md on GitHub](https://github.com/twardoch/mkdocs-text-export-plugin#contributing) for guidelines on reporting bugs, requesting features, or submitting pull requests.
 
-If you want to contribute to the code of this project, please read the [Contribution Guidelines][contributing].
+## License
 
-#### **Special thanks**
+This plugin is licensed under the MIT License. See the [LICENSE file on GitHub](https://github.com/twardoch/mkdocs-text-export-plugin/blob/master/LICENSE) for more details.
 
-Special thanks go to [Stephan Hauser][shauser] for the original development of this plugin.
+## Acknowledgements
 
-Special thanks go to [Lukas Geiter][lukasgeiter] for developing the [mkdocs-awesome-pages-plugin][awesome-pages-plugin] which was used as a base and for convincing [Stephan Hauser][shauser] to write a plugin for this.
-
-[github-issues]: https://github.com/zhaoterryy/mkdocs-pdf-export-plugin/issues
-[contributing]: https://github.com/zhaoterryy/mkdocs-pdf-export-plugin/blob/master/CONTRIBUTING.md
-[lukasgeiter]: https://github.com/lukasgeiter
-[shauser]: https://github.com/shauser
-[awesome-pages-plugin]: https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin
+This plugin builds upon ideas and code from earlier projects, including:
+- `mkdocs-pdf-export-plugin`
+- Work by Stephan Hauser and Lukas Geiter in the MkDocs plugin ecosystem.
+This current version has been significantly refactored and modernized.

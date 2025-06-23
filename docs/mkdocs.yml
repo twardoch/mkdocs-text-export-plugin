@@ -1,17 +1,19 @@
-site_name: mkdocs-pdf-export-plugin
+site_name: MkDocs Text Export Plugin
 theme:
-  name: cinder
-use_directory_urls: false
+  name: readthedocs # Using a standard theme for simplicity for now
+use_directory_urls: true # More common default
 plugins:
   - search
-  - pdf-export:
-      combined: true
-      theme_handler_path: theme-handler/cinder.py
+  # If we want to use text-export for its own docs:
+  # - text-export:
+  #     markdown: true # e.g., generate markdown versions of the docs
 
 nav:
-  - Intro: index.md
-  - Options: options.md
+  - Introduction: index.md
+  - Configuration Options: options.md
+  - Custom Theme Handlers: theme_handlers.md # Will create this page
 
-repo_url: https://github.com/zhaoterryy/mkdocs-pdf-export-plugin
-edit_uri: edit/master/docs/
-remote_name: git@github.com:zhaoterryy/mkdocs-pdf-export-plugin.git
+repo_url: https://github.com/twardoch/mkdocs-text-export-plugin
+edit_uri: edit/master/docs/docs/ # edit_uri should point to the 'docs/docs' subdirectory if pages are there
+
+# remote_name is not a standard mkdocs.yml option, removing.
