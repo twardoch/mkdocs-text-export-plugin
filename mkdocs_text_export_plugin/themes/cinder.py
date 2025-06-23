@@ -15,7 +15,9 @@ def modify_html(html: str, href: str) -> str:
     a.string = "Open text"
 
     sm_wrapper.append(a)
-    if soup.body and soup.body.footer:
-        soup.body.footer.insert(0, sm_wrapper)
+    if soup.body:
+        footer = getattr(soup.body, 'footer', None)
+        if footer:
+            footer.insert(0, sm_wrapper)
 
     return str(soup)
