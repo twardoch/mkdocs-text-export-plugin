@@ -8,10 +8,9 @@ import logging
 
 class MdTxtExportPlugin(BasePlugin):
 
-
     config_scheme = (
         ("verbose", config_options.Type(bool, default=False)),
-        ("enabled_if_env", config_options.Type(str)),
+        ("enabled_if_env", config_options.Type(str, default=None)), # Allow None
         ("markdown", config_options.Type(bool, default=False)),
         ("plain_tables", config_options.Type(bool, default=False)),
         ("open_quote", config_options.Type(str, default="“")),
@@ -19,7 +18,7 @@ class MdTxtExportPlugin(BasePlugin):
         ("default_image_alt", config_options.Type(str, default="")),
         ("hide_strikethrough", config_options.Type(bool, default=False)),
         ("kill_tags", config_options.Type(list, default=[])),
-        ("theme_handler_path", config_options.Type(str)),
+        ("theme_handler_path", config_options.Type(str, default="")),
     )
 
     def __init__(self):
@@ -32,23 +31,24 @@ class MdTxtExportPlugin(BasePlugin):
         self.total_time = 0
 
     def on_config(self, config):
-        if "enabled_if_env" in self.config:
-            if env_name := self.config["enabled_if_env"]:
-                self.enabled = os.environ.get(env_name) == "1"
-                if not self.enabled:
-                    logging.warn(
-                        f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
-                    )
-
-                    return
+        # Access plugin config via self.config, not config argument
+        if self.config["enabled_if_env"]:
+            env_name = self.config["enabled_if_env"]
+            self.enabled = os.environ.get(env_name) == "1"
+            if not self.enabled:
+                # Ensure logging is available here
+                log = logging.getLogger(__name__)
+                log.warning(
+                    f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
+                )
+                return # Return None to disable plugin
 
         self.markdown = self.config["markdown"]
         if self.markdown:
             self.file_ext = "md"
 
-        import logging
+        # Configure logging after checking enabled status
         log = logging.getLogger(__name__)
-
         if self.config["verbose"]:
             log.setLevel(logging.DEBUG)
         else:
@@ -104,7 +104,8 @@ class MdTxtExportPlugin(BasePlugin):
 
         filename = os.path.splitext(os.path.basename(src_path))[0]
 
-        from weasyprint import urls
+        from weasyprint import urls  # type: ignore
+
         base_url = urls.path2url(os.path.join(path, filename))
         txt_file = f"{filename}.{self.file_ext}"
 
@@ -127,10 +128,7 @@ class MdTxtExportPlugin(BasePlugin):
             return
 
         logging.info(
-            "Converting {} files to text took {:.1f}s".format(
-                self.num_files, self.total_time
-            )
+            f"Converting {self.num_files} files to text took {self.total_time:.1f}s"
         )
         if self.num_errors > 0:
             logging.error(f"{self.num_errors} conversion errors occurred (see above)")
-

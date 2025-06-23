@@ -6,10 +6,10 @@ def get_stylesheet() -> str:
 
 
 def modify_html(html: str, href: str) -> str:
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, "html.parser")
 
     if soup.head:
-        link = soup.new_tag('link', href=href, rel='alternate', title='Text export')
+        link = soup.new_tag("link", href=href, rel="alternate", title="Text export")
         soup.head.append(link)
 
     return str(soup)

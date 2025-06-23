@@ -1,0 +1,8 @@
+# Development dependencies
+pytest
+flake8
+black
+mypy
+mkdocs
+# Dependencies for testing themes
+mkdocs-material
