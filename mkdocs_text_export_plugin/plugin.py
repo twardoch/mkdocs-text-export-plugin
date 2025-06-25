@@ -1,13 +1,12 @@
+import logging
 import os
 from timeit import default_timer as timer
 
 from mkdocs.config import config_options
 from mkdocs.plugins import BasePlugin
-import logging
 
 
 class MdTxtExportPlugin(BasePlugin):
-
     config_scheme = (
         ("verbose", config_options.Type(bool, default=False)),
         ("enabled_if_env", config_options.Type(str, default=None)), # Allow None
@@ -47,7 +46,8 @@ class MdTxtExportPlugin(BasePlugin):
         if self.markdown:
             self.file_ext = "md"
 
-        # Configure logging after checking enabled status
+        import logging
+
         log = logging.getLogger(__name__)
         if self.config["verbose"]:
             log.setLevel(logging.DEBUG)
@@ -104,7 +104,7 @@ class MdTxtExportPlugin(BasePlugin):
 
         filename = os.path.splitext(os.path.basename(src_path))[0]
 
-        from weasyprint import urls  # type: ignore
+        from weasyprint import urls
 
         base_url = urls.path2url(os.path.join(path, filename))
         txt_file = f"{filename}.{self.file_ext}"

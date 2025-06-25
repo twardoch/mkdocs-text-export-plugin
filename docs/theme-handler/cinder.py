@@ -11,17 +11,25 @@
 
 from bs4 import BeautifulSoup
 
-def fix_html(html: str, base_url: str) -> str:
-    """
-    Modifies the HTML content of a page before it's converted to text or Markdown.
-    This function is called by the core plugin.
 
-    Args:
-        html: The raw HTML string of the page.
-        base_url: The base URL of the page (rarely needed for text conversion).
+def get_stylesheet() -> str:
+    return """
+    body > .container {
+        margin-top: -100px;
+    }
 
-    Returns:
-        The modified HTML string.
+    @page {
+        @bottom-left {
+            content: counter(__pgnum__);
+        }
+        size: letter;
+    }
+    
+    @media print {
+        .noprint {
+            display: none;
+        }
+    }
     """
     soup = BeautifulSoup(html, "html.parser")
 
@@ -50,49 +58,15 @@ def fix_html(html: str, base_url: str) -> str:
     return str(soup)
 
 
+
 def modify_html(html: str, href: str) -> str:
-    """
-    Modifies the original page's HTML, typically to add a <link rel="alternate">
-    tag pointing to the exported text/Markdown file.
-    This function is called by the core plugin.
-
-    Args:
-        html: The original HTML string of the page.
-        href: The relative path to the generated text or Markdown file.
-
-    Returns:
-        The modified HTML string (with the added link tag).
-    """
     soup = BeautifulSoup(html, "html.parser")
+    sm_wrapper = soup.new_tag("small")
 
-    if soup.head:
-        link_tag = soup.new_tag(
-            "link",
-            rel="alternate",
-            # The 'type' attribute (e.g., 'text/plain' or 'text/markdown')
-            # will be automatically set by the plugin based on the output format.
-            href=href,
-            title="Text Export Version"  # A descriptive title for the link
-        )
-        soup.head.append(link_tag)
-    else:
-        # This case should be rare for valid MkDocs pages
-        print(
-            "WARNING: Custom theme handler: No <head> tag found in page to add alternate link."
-        )
+    a = soup.new_tag("a", href=href, title="Text export", download=None)
+    a["class"] = "txt-download"
+    a.string = "Open text"
 
     return str(soup)
 
-
-def get_stylesheet() -> str:
-    """
-    Returns custom CSS for styling the page before conversion.
-    This function is generally NOT USED by mkdocs-text-export-plugin,
-    as its focus is on text content rather than visual styling for an
-    intermediate format (like PDF generation plugins might use).
-
-    It's included here for structural completeness if you are adapting
-    a theme handler from a plugin that does use it (e.g., a PDF exporter).
-    For mkdocs-text-export-plugin, you can safely have it return an empty string.
-    """
-    return ""
+    return str(soup)

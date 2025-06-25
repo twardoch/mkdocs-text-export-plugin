@@ -1,14 +1,15 @@
-import os
-from pathlib import Path
-from importlib import import_module
-from importlib.util import spec_from_file_location, module_from_spec
 import logging
+import os
+from importlib import import_module
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 
-from html22text import html22text # type: ignore
+from html22text import html22text
+
 from .themes import generic as generic_theme
 
 
-class Renderer(object):
+class Renderer:
     def __init__(
         self,
         theme: str,
