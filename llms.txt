@@ -1,0 +1,1460 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.github/
+  workflows/
+    ci.yml
+docs/
+  docs/
+    index.md
+    options.md
+    theme_handlers.md
+  theme-handler/
+    cinder.py
+  .gitignore
+  mkdocs.yml
+mkdocs_text_export_plugin/
+  themes/
+    basictheme.py
+    cinder.py
+    generic.py
+    material.py
+  plugin.py
+  renderer.py
+tests/
+  __init__.py
+  test_plugin.py
+.gitignore
+LICENSE
+README.md
+requirements-dev.txt
+requirements.txt
+setup.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".github/workflows/ci.yml">
+name: Python CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        # Ensure all dependencies for setup.py are met, including html22text from git
+        pip install .
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check formatting with black
+      run: |
+        pip install black
+        black --check .
+
+    - name: Static type checking with mypy
+      run: |
+        pip install mypy types-setuptools types-beautifulsoup4
+        mypy . --exclude venv --exclude docs/theme-handler/cinder.py --ignore-missing-imports
+
+    - name: Test with pytest
+      run: |
+        pip install pytest
+        pytest
+
+    - name: Build package
+      run: |
+        python setup.py sdist bdist_wheel
+        # You can optionally upload the artifacts:
+        # uses: actions/upload-artifact@v3
+        # with:
+        #   name: package-${{ matrix.python-version }}
+        #   path: dist/
+</file>
+
+<file path="docs/docs/theme_handlers.md">
+# Custom Theme Handlers
+
+The `mkdocs-text-export-plugin` allows for theme-specific adjustments to the HTML content before it's converted to text or Markdown. This is achieved through "theme handlers."
+
+## Purpose
+
+Different MkDocs themes structure their HTML in various ways. A theme handler can:
+
+- Remove theme-specific navigation, headers, footers, or sidebars that are irrelevant to a text export.
+- Restructure content for better text-based readability.
+- Make other modifications to the HTML to improve the quality of the text or Markdown output.
+
+## How it Works
+
+The plugin attempts to load a built-in handler corresponding to your site's theme name (e.g., `material.py` for the `mkdocs-material` theme). If a specific handler for your theme isn't found, it defaults to a `generic.py` handler which performs minimal modifications.
+
+## Using a Custom Theme Handler
+
+You can provide your own theme handler script using the `theme_handler_path` option in the plugin configuration:
+
+```yaml
+plugins:
+  - text-export:
+      theme_handler_path: "path/to/your/custom_handler.py"
+```
+
+The specified path should be relative to your MkDocs project root (where `mkdocs.yml` is located).
+
+### Theme Handler Script Structure
+
+A theme handler script must implement at least one function:
+
+- `fix_html(html: str, base_url: str) -> str`:
+    - Takes the raw HTML content of a page and its base URL as input.
+    - Should return the modified HTML string.
+    - This function is called by the main `Renderer` before passing the HTML to `html22text`.
+
+Additionally, for more advanced integration (like adding custom links or modifying the final output path, though less common for this plugin's direct text output compared to, say, PDF generation plugins), a theme handler *could* implement:
+
+- `modify_html(html: str, href: str) -> str`:
+    - This function is called by the plugin to allow the theme handler to modify the original page's HTML, for example, to add a `<link rel="alternate">` tag. The `href` parameter is the path to the generated text file.
+    - The default theme handlers in this plugin already provide a basic implementation for this.
+- `get_stylesheet() -> str`:
+    - Less relevant for text export, but for PDF or other rich outputs, this could provide custom CSS. For text export, it's unlikely to be used.
+
+### Example
+
+An example of a custom theme handler can be found at `docs/theme-handler/cinder.py` within this plugin's repository. While it was originally for the `cinder` theme and potentially for a PDF export context, it demonstrates the structure of such a handler.
+
+```python
+# Example structure (docs/theme-handler/cinder.py)
+from bs4 import BeautifulSoup
+
+def fix_html(html: str, base_url: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Example: Remove a specific element
+    # nav = soup.find("nav", class_="md-tabs")
+    # if nav:
+    #     nav.decompose()
+
+    return str(soup)
+
+def modify_html(html: str, href: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    if soup.head:
+        link_tag = soup.new_tag(
+            "link",
+            rel="alternate",
+            # type attribute will be set by the plugin based on output format
+            href=href,
+            title="Text Export"
+        )
+        soup.head.append(link_tag)
+    return str(soup)
+
+# def get_stylesheet() -> str:
+# return ""
+```
+
+When creating your own handler, you'll typically use a library like `BeautifulSoup4` to parse and manipulate the HTML. Remember to install any necessary dependencies for your custom handler in your MkDocs environment.
+</file>
+
+<file path="docs/.gitignore">
+site/
+</file>
+
+<file path="tests/__init__.py">
+# This file is intentionally left blank.
+# It marks the 'tests' directory as a Python package.
+</file>
+
+<file path="tests/test_plugin.py">
+import pytest
+from pathlib import Path
+from mkdocs.config import Config
+from mkdocs.config import config_options
+from mkdocs_text_export_plugin.plugin import MdTxtExportPlugin
+
+# Default config for testing
+CONFIG_SCHEME = (
+    ("theme", config_options.Theme(default="mkdocs")),
+    ("enabled_if_env", config_options.Type(str)),
+    ("markdown", config_options.Type(bool, default=False)),
+    ("plain_tables", config_options.Type(bool, default=False)),
+    ("open_quote", config_options.Type(str, default="“")),
+    ("close_quote", config_options.Type(str, default="”")),
+    ("default_image_alt", config_options.Type(str, default="")),
+    ("hide_strikethrough", config_options.Type(bool, default=False)),
+    ("kill_tags", config_options.Type(list, default=[])),
+    ("theme_handler_path", config_options.Type(str, default="")),
+    ("verbose", config_options.Type(bool, default=False)),
+)
+
+
+@pytest.fixture
+def plugin_config():
+    """Fixture for plugin configuration dictionary."""
+    # This represents the user's config in mkdocs.yml for this plugin
+    return {
+        "markdown": False,
+        "plain_tables": False,
+        "open_quote": "“",
+        "close_quote": "”",
+        "default_image_alt": "",
+        "hide_strikethrough": False,
+        "kill_tags": [],
+        "theme_handler_path": "",
+        "verbose": False,
+        "enabled_if_env": None,
+    }
+
+
+@pytest.fixture
+def plugin(plugin_config):
+    """Fixture for MdTxtExportPlugin, initialized with config."""
+    p = MdTxtExportPlugin()
+    p.load_config(plugin_config)  # Load the plugin's config
+    return p
+
+
+@pytest.fixture
+def mkdocs_config():
+    """Fixture for a base MkDocs config."""
+    conf = Config(CONFIG_SCHEME)
+    # Users would define plugin configs in their mkdocs.yml like:
+    # plugins:
+    #   - text-export:
+    #       markdown: true
+    # This fixture simulates the state *before* the plugin's on_config is called.
+    # The plugin's own config is loaded via `plugin.load_config` in the `plugin` fixture.
+    # Simulate the theme object that MkDocs provides
+    class MockTheme:
+        def __init__(self, name):
+            self.name = name
+
+    conf.load_dict({"theme": MockTheme("mkdocs")})  # Basic mkdocs config with theme object
+    return conf
+
+
+def test_on_config_defaults(plugin, mkdocs_config):
+    """Test that the plugin loads default configurations correctly."""
+    # plugin.config is already loaded by the plugin fixture
+    result = plugin.on_config(mkdocs_config) # Call on_config with the main mkdocs_config
+    assert plugin.config["markdown"] is False
+    assert plugin.config["plain_tables"] is False
+    assert plugin.config["open_quote"] == "“"
+    assert plugin.config["close_quote"] == "”"
+    assert plugin.config["default_image_alt"] == ""
+    assert plugin.config["hide_strikethrough"] is False
+    assert plugin.config["kill_tags"] == []
+    assert plugin.config["theme_handler_path"] == ""
+    assert plugin.config["verbose"] is False
+    assert plugin.enabled is True
+    assert plugin.file_ext == "txt"
+    assert result == mkdocs_config
+
+
+def test_on_config_markdown_true(plugin_config, mkdocs_config):
+    """Test that the plugin correctly sets markdown mode."""
+    plugin_config["markdown"] = True
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+    result = plugin.on_config(mkdocs_config)
+    assert plugin.markdown is True
+    assert plugin.file_ext == "md"
+    assert result == mkdocs_config
+
+
+def test_on_config_enabled_if_env_set(plugin_config, mkdocs_config, monkeypatch):
+    """Test that the plugin is enabled when the specified environment variable is set."""
+    monkeypatch.setenv("ENABLE_EXPORT", "1")
+    plugin_config["enabled_if_env"] = "ENABLE_EXPORT"
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+    result = plugin.on_config(mkdocs_config)
+    assert plugin.enabled is True
+    assert result == mkdocs_config
+
+
+def test_on_config_enabled_if_env_not_set(plugin_config, mkdocs_config, monkeypatch):
+    """Test that the plugin is disabled when the specified environment variable is not set."""
+    monkeypatch.delenv("DISABLE_EXPORT", raising=False) # Ensure it's not set
+    plugin_config["enabled_if_env"] = "DISABLE_EXPORT"
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+    result = plugin.on_config(mkdocs_config)
+    assert plugin.enabled is False
+    assert result is None  # on_config returns None when disabled
+
+
+# Mock objects for on_nav and on_post_page tests
+class MockNav:
+    def __init__(self, pages):
+        self.pages = pages
+
+
+class MockPage:
+    def __init__(self, title, url, abs_dest_path, src_path, content=None):
+        self.title = title
+        self.file = MockFile(url, abs_dest_path, src_path)
+        self.content = content
+        # For compatibility with older MkDocs versions if the plugin supports them
+        self.abs_output_path = abs_dest_path
+        self.input_path = src_path
+
+
+class MockFile:
+    def __init__(self, url, abs_dest_path, src_path):
+        self.url = url
+        self.abs_dest_path = abs_dest_path
+        self.src_path = src_path
+
+
+@pytest.fixture
+def mock_nav_fixture(tmp_path): # Renamed to avoid conflict with MockNav class
+    pages = [
+        MockPage(
+            "Home",
+            "index.html",
+            str(tmp_path / "site" / "index.html"),
+            str(tmp_path / "src" / "index.md"),
+        ),
+        MockPage(
+            "About",
+            "about/index.html",
+            str(tmp_path / "site" / "about" / "index.html"),
+            str(tmp_path / "src" / "about.md"),
+        ),
+    ]
+    return MockNav(pages)
+
+
+def test_on_nav(plugin, mock_nav_fixture, mkdocs_config):
+    """Test the on_nav method."""
+    plugin.on_config(mkdocs_config)  # Ensure plugin is configured
+    # Ensure the theme object has a 'name' attribute
+    if not hasattr(mkdocs_config["theme"], 'name'):
+        mkdocs_config["theme"].name = "mkdocs"
+
+    result_nav = plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
+
+    assert plugin.renderer is not None
+    assert len(plugin.renderer.pages) == len(mock_nav_fixture.pages)
+    assert plugin.renderer.page_order == [p.file.url for p in mock_nav_fixture.pages]
+    assert result_nav == mock_nav_fixture
+
+
+def test_on_nav_disabled(plugin_config, mock_nav_fixture, mkdocs_config, monkeypatch):
+    """Test that on_nav does nothing if the plugin is disabled."""
+    monkeypatch.setenv("DISABLE_EXPORT_NAV", "0")  # Ensure it's disabled
+    plugin_config["enabled_if_env"] = "DISABLE_EXPORT_NAV"
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+    plugin.on_config(mkdocs_config)  # This will set plugin.enabled to False
+
+    assert plugin.enabled is False
+    result_nav = plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
+    assert plugin.renderer is None  # Renderer should not be initialized
+    assert result_nav == mock_nav_fixture
+
+
+def test_on_post_page_creates_file(plugin, tmp_path, mkdocs_config, mock_nav_fixture):
+    """Test that on_post_page creates a text file."""
+    # Configure plugin and prepare renderer via on_nav
+    plugin.on_config(mkdocs_config)
+    if not hasattr(mkdocs_config["theme"], 'name'):
+        mkdocs_config["theme"].name = "mkdocs"
+    plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
+
+    # Use the first page from the mock_nav_fixture for the test
+    page_to_test = mock_nav_fixture.pages[0]
+    page_content = f"<h1>{page_to_test.title}</h1><p>This is a test.</p>"
+
+    # Ensure the destination directory exists
+    output_dir = tmp_path / "site"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
+
+
+    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+
+    plugin.on_post_page(page_content, page_to_test, mkdocs_config)
+
+    assert output_file_path.exists()
+    # Adjusted expectation: html22text with generic theme might not add '##' for H1 by default
+    # and might handle newlines differently or have subtle variations.
+    # The key is that the content is present.
+    # For plain text, html22text default might be:
+    # Home
+    # This is a test.
+    expected_text_content = f"{page_to_test.title}\n\nThis is a test."
+    assert output_file_path.read_text().replace('\r\n', '\n').strip() == expected_text_content.strip()
+
+
+def test_on_post_page_markdown_output(plugin_config, tmp_path, mkdocs_config, mock_nav_fixture):
+    """Test that on_post_page creates a markdown file when markdown=True."""
+    plugin_config["markdown"] = True
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+
+    plugin.on_config(mkdocs_config)
+    if not hasattr(mkdocs_config["theme"], 'name'):
+        mkdocs_config["theme"].name = "mkdocs"
+    plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
+
+    page_to_test = mock_nav_fixture.pages[0]
+    page_content = f"<h1>{page_to_test.title}</h1><p>This is a  тест with <a href='http://example.com'>a link</a>.</p>"
+
+    output_dir = tmp_path / "site"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
+
+    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+
+    plugin.on_post_page(page_content, page_to_test, mkdocs_config)
+
+    assert output_file_path.exists()
+    assert plugin.file_ext == "md"
+    # html2text with markdown=True will produce something like:
+    # # Test Page
+    #
+    # This is a test with [a link](http://example.com).
+    # html22text default for markdown might be:
+    # # Home
+    # This is a тест with [a link](<http://example.com>).
+    # Note the angle brackets for the URL if html22text adds them.
+    expected_md_content = f"# {page_to_test.title}\n\nThis is a тест with [a link](<{page_to_test.file.url}>)."
+    # Let's be more precise with the URL from the page object if that's what html22text would use.
+    # However, the input HTML has 'http://example.com'.
+    # The previous failing test showed <http://example.com>
+    expected_md_content = f"# {page_to_test.title}\n\nThis is a тест with [a link](<http://example.com>).\n"
+    # Normalize newlines and strip whitespace for comparison
+    assert output_file_path.read_text().replace('\r\n', '\n').strip() == expected_md_content.strip()
+
+
+def test_on_post_page_disabled(plugin_config, tmp_path, mkdocs_config, monkeypatch):
+    """Test that on_post_page does nothing if the plugin is disabled."""
+    monkeypatch.setenv("DISABLE_EXPORT_POST", "0")
+    plugin_config["enabled_if_env"] = "DISABLE_EXPORT_POST"
+    plugin = MdTxtExportPlugin()
+    plugin.load_config(plugin_config)
+    plugin.on_config(mkdocs_config)
+
+    assert plugin.enabled is False
+
+    page_content = "<h1>Disabled Test</h1>"
+    # Create a new MockPage for this test to avoid state issues with fixtures
+    page = MockPage(
+        title="Disabled Page",
+        url="disabled.html",
+        abs_dest_path=str(tmp_path / "site" / "disabled.html"),
+        src_path=str(tmp_path / "src" / "disabled.md"),
+        content=page_content,
+    )
+    # Ensure output directory for the mock page exists, even if not used
+    (tmp_path / "site").mkdir(parents=True, exist_ok=True)
+
+    output_file_path = tmp_path / "site" / f"{Path(page.file.src_path).stem}.{plugin.file_ext}"
+
+    plugin.renderer = None # Renderer would not have been initialized
+
+    result_content = plugin.on_post_page(page_content, page, mkdocs_config)
+
+    assert not output_file_path.exists()
+    assert result_content == page_content  # Should return original content
+    assert plugin.num_files == 0  # No files should be processed
+
+
+# TODO: Add tests for different renderer options (plain_tables, etc.)
+# TODO: Add tests for theme handlers.
+# TODO: Test error handling in on_post_page (e.g., if renderer.write_txt fails)
+</file>
+
+<file path="requirements-dev.txt">
+# Development dependencies
+pytest
+flake8
+black
+mypy
+mkdocs
+# Dependencies for testing themes
+mkdocs-material
+</file>
+
+<file path="docs/docs/index.md">
+# MkDocs Text Export Plugin
+
+Welcome to the documentation for the `mkdocs-text-export-plugin`. This plugin allows you to export your MkDocs pages to either plain text or simplified Markdown format.
+
+## Overview
+
+The plugin works by taking the final HTML rendered by MkDocs (after all other plugins have done their work) and converting it. This is particularly useful for:
+
+- Generating plain text versions of your site for Natural Language Processing (NLP), indexing, or accessibility.
+- Creating simplified Markdown versions that are stripped of complex MkDocs-specific syntax or HTML, which can be useful for content migration or re-purposing.
+
+It uses the [`html22text`](https://github.com/twardoch/html22text) library for the core conversion and allows for theme-specific adjustments via [Custom Theme Handlers](theme_handlers.md).
+
+## Key Features
+
+- Export to plain text (`.txt`) or Markdown (`.md`).
+- Configurable options for fine-tuning the output.
+- Ability to use custom theme handlers for precise control over HTML pre-processing.
+- Option to enable/disable the plugin via an environment variable.
+
+## Installation
+
+Install the plugin from PyPI using pip:
+
+```bash
+pip install mkdocs-text-export-plugin
+```
+
+Then, add the plugin to your `mkdocs.yml` file. It's recommended to place it late in the plugin list:
+
+```yaml
+plugins:
+  - search # Example
+  # - other_plugins_you_use
+  - text-export
+```
+
+> **Note:** If you have no `plugins` entry in your config file yet, you'll likely also want to add the `search` plugin. MkDocs enables it by default if there is no `plugins` entry set, but now you have to enable it explicitly if you add a `plugins` section.
+
+For detailed configuration, see the [Configuration Options](options.md) page.
+
+## Requirements
+
+- Python >= 3.10
+- MkDocs >= 1.3.0 (though likely works with >=1.0)
+- Key dependencies: `html22text`, `beautifulsoup4`
+
+## Contributing
+
+Contributions are welcome! Please refer to the main [README.md on GitHub](https://github.com/twardoch/mkdocs-text-export-plugin#contributing) for guidelines on reporting bugs, requesting features, or submitting pull requests.
+
+## License
+
+This plugin is licensed under the MIT License. See the [LICENSE file on GitHub](https://github.com/twardoch/mkdocs-text-export-plugin/blob/master/LICENSE) for more details.
+
+## Acknowledgements
+
+This plugin builds upon ideas and code from earlier projects, including:
+- `mkdocs-pdf-export-plugin`
+- Work by Stephan Hauser and Lukas Geiter in the MkDocs plugin ecosystem.
+This current version has been significantly refactored and modernized.
+</file>
+
+<file path="docs/mkdocs.yml">
+site_name: MkDocs Text Export Plugin
+theme:
+  name: readthedocs # Using a standard theme for simplicity for now
+use_directory_urls: true # More common default
+plugins:
+  - search
+  # If we want to use text-export for its own docs:
+  # - text-export:
+  #     markdown: true # e.g., generate markdown versions of the docs
+
+nav:
+  - Introduction: index.md
+  - Configuration Options: options.md
+  - Custom Theme Handlers: theme_handlers.md # Will create this page
+
+repo_url: https://github.com/twardoch/mkdocs-text-export-plugin
+edit_uri: edit/master/docs/docs/ # edit_uri should point to the 'docs/docs' subdirectory if pages are there
+
+# remote_name is not a standard mkdocs.yml option, removing.
+</file>
+
+<file path="mkdocs_text_export_plugin/themes/basictheme.py">
+from bs4 import BeautifulSoup
+
+
+def get_stylesheet() -> str:
+    return ""
+
+
+def modify_html(html: str, href: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    if soup.head:
+        link = soup.new_tag("link", href=href, rel="alternate", title="Text export")
+        soup.head.append(link)
+
+    return str(soup)
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2022 Adam Twardoch
+Copyright (c) 2018 Terry Zhao
+Copyright (c) 2018 Stephan Hauser
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="docs/docs/options.md">
+# Configuration Options
+
+You can configure the `mkdocs-text-export-plugin` by passing options under the `text-export` key in your `mkdocs.yml` file.
+
+```yaml
+plugins:
+  - text-export:
+      # --- General Options ---
+      enabled_if_env: YOUR_ENV_VARIABLE_NAME # Optional
+      verbose: false
+
+      # --- Output Format ---
+      markdown: false
+
+      # --- Plain Text Specific Options (when markdown: false) ---
+      plain_tables: false
+      default_image_alt: ""
+
+      # --- Markdown & Plain Text Common Options (passed to html22text) ---
+      open_quote: "“"
+      close_quote: "”"
+      hide_strikethrough: false
+      kill_tags:
+        - script
+        - style
+
+      # --- Theme Handling ---
+      theme_handler_path: "" # Optional path to custom_handler.py
+```
+
+Below is a detailed description of each option:
+
+## General Options
+
+### `enabled_if_env`
+<small>*Default: `None` (plugin is always enabled)*</small>
+
+If set to an environment variable name (e.g., `ENABLE_TEXT_EXPORT`), the plugin will only run if that environment variable is set to `1`. This is useful for conditionally enabling the plugin, for example, only in production builds.
+
+### `verbose`
+<small>*Default: `false`*</small>
+
+Set to `true` to enable verbose logging from the plugin, which can be helpful for debugging. This typically includes more detailed messages from the theme handler loading process and conversion steps.
+
+## Output Format
+
+### `markdown`
+<small>*Default: `false`*</small>
+
+- If `false` (default), pages are exported to plain text (`.txt`) files.
+- If `true`, pages are exported to simplified Markdown (`.md`) files.
+
+## Plain Text Specific Options
+
+These options primarily affect the output when `markdown: false`.
+
+### `plain_tables`
+<small>*Default: `false`*</small>
+
+If `true` and exporting to plain text, tables will be rendered in a simpler, list-like format instead of attempting to draw ASCII table borders. This option is passed to `html22text`.
+
+### `default_image_alt`
+<small>*Default: `""` (empty string)*</small>
+
+If set to a non-empty string (e.g., `"[Image]"`), all images encountered during plain text conversion will be replaced by this string. If empty, `html22text`'s default behavior for images applies (which might be to use the image's actual `alt` text or a link).
+
+## Markdown & Plain Text Common Options
+
+These options are generally passed through to the underlying `html22text` library and affect both Markdown and plain text output.
+
+### `open_quote`
+<small>*Default: `"“"` (U+201C Left Double Quotation Mark)*</small>
+
+The character or string to use for opening quotes (e.g., for the `<q>` HTML tag).
+
+### `close_quote`
+<small>*Default: `"”"` (U+201D Right Double Quotation Mark)*</small>
+
+The character or string to use for closing quotes.
+
+### `hide_strikethrough`
+<small>*Default: `false`*</small>
+
+If `true`, content within `<s>` or `<del>` (strikethrough) HTML tags will be removed from the output. If `false`, the content is typically preserved but without the strikethrough formatting.
+
+### `kill_tags`
+<small>*Default: `[]` (empty list)*</small>
+
+A list of HTML tags (e.g., `script`, `style`, `nav.header`, `p.admonition-title`) whose content (including the tags themselves) will be completely removed from the HTML before conversion. This is useful for stripping out elements that are not relevant to the text or Markdown output.
+
+## Theme Handling
+
+### `theme_handler_path`
+<small>*Default: `""` (empty string, uses built-in handlers)*</small>
+
+Allows you to specify a path to a custom Python script that acts as a theme handler. The path should be relative to your MkDocs project root (where `mkdocs.yml` is located). See the [Custom Theme Handlers](theme_handlers.md) page for more details on creating one. If not specified, the plugin will try to use a built-in handler matching your site's theme, or a generic fallback.
+</file>
+
+<file path="mkdocs_text_export_plugin/themes/generic.py">
+from bs4 import BeautifulSoup
+
+
+def get_stylesheet() -> str:
+    return ""
+
+
+def modify_html(html: str, href: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    if soup.head:
+        link = soup.new_tag("link", href=href, rel="alternate", title="Text export")
+        soup.head.append(link)
+
+    return str(soup)
+</file>
+
+<file path=".gitignore">
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+.DS_Store
+</file>
+
+<file path="mkdocs_text_export_plugin/themes/cinder.py">
+from bs4 import BeautifulSoup
+
+
+def get_stylesheet() -> str:
+    return ""
+
+
+def modify_html(html: str, href: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    sm_wrapper = soup.new_tag("small")
+
+    a = soup.new_tag("a", href=href, title="Text export", download=None)
+    a["class"] = "txt-download"
+    a.string = "Open text"
+
+    sm_wrapper.append(a)
+    if soup.body:
+        footer = getattr(soup.body, 'footer', None)
+        if footer:
+            footer.insert(0, sm_wrapper)
+
+    return str(soup)
+</file>
+
+<file path="mkdocs_text_export_plugin/themes/material.py">
+def get_stylesheet() -> str:
+    return """
+    h1, h2, h3 {
+         string-set: chapter content();
+    }
+
+    .md-container {
+        display: block;
+        padding-top: 0;
+    }
+
+    .md-main {
+        display: block;
+        height: inherit;
+    }
+
+    .md-main__inner {
+        height: inherit;
+        padding-top: 0;
+    }
+
+    .md-typeset .codehilitetable .linenos {
+        display: none;
+    }
+
+    .md-typeset .footnote-ref {
+        display: inline-block;
+    }
+
+    .md-typeset a.footnote-backref {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .md-typeset .admonition {
+        display: block;
+        border-top: .1rem solid rgba(0,0,0,.07);
+        border-right: .1rem solid rgba(0,0,0,.07);
+        border-bottom: .1rem solid rgba(0,0,0,.07);
+        page-break-inside: avoid;
+    }
+
+    .md-typeset a::after {
+        color: inherit;
+        content: none;
+    }
+
+    .md-typeset table:not([class]) th {
+        min-width: 0;
+    }
+
+    .md-typeset table {
+        border: .1rem solid rgba(0,0,0,.07);
+    }
+    """
+
+
+def modify_html(html: str, href: str) -> str:
+    # SVG 'file-download' size 2x from fontawesome: https://fontawesome.com/icons/file-download?style=solid
+    # resized to 1.2rem width * height
+    a_tag = (
+        '<a class="md-content__button md-icon" download href="%s" title="Text export">'
+        % href
+    )
+    icon = '<svg style="height: 1.2rem; width: 1.2rem;" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg"><path d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>'
+    button_tag = a_tag + icon + "</a>"
+
+    # insert into HTML
+    insert_point = '<article class="md-content__inner md-typeset">'
+    return html.replace(insert_point, insert_point + button_tag)
+</file>
+
+<file path="README.md">
+# mkdocs-text-export-plugin
+
+An MkDocs plugin to convert your documentation pages to Markdown or plain text.
+
+This plugin processes the fully rendered HTML of your MkDocs site. It then uses the [`html22text`](https://github.com/twardoch/html22text) library, along with theme-specific handlers, to extract either a plain-text or a simplified Markdown representation of your content.
+
+- **Markdown Output**: Useful if your source files use many MkDocs plugins for features like code inclusion, content embedding, or other preprocessing. The output will be a simplified Markdown document, which may not preserve all custom Markdown constructs or raw HTML present in your original source.
+- **Plain Text Output**: Ideal for tasks such as natural language processing (NLP), content indexing, or creating easily consumable text versions of your documentation.
+
+## Installation
+
+Install the plugin using pip:
+
+```bash
+pip install mkdocs-text-export-plugin
+```
+
+## Usage
+
+Add `text-export` to the `plugins` section of your `mkdocs.yml`. It's generally recommended to place it towards the **end** of the plugin list to ensure it processes the final HTML output from other plugins.
+
+Example `mkdocs.yml` configuration:
+
+```yaml
+plugins:
+  - search # Example: ensure search is loaded before
+  - another-plugin
+  - text-export:
+      # --- General Options ---
+      # enabled_if_env: MY_ENV_VARIABLE # Only enable if MY_ENV_VARIABLE=1
+      verbose: false # Set to true for detailed logging
+
+      # --- Output Format ---
+      markdown: false # if true, exports to Markdown; otherwise, exports to plain text
+
+      # --- Plain Text Specific Options (when markdown: false) ---
+      plain_tables: false # if true, uses a simpler list-like format for tables
+      default_image_alt: "" # if non-empty, replaces all images with this alt text.
+                            # If empty, images are typically converted to their alt text or a link.
+
+      # --- Markdown & Plain Text Common Options (via html22text) ---
+      open_quote: "“" # Character for the opening <q> tag
+      close_quote: "”" # Character for the closing <q> tag
+      hide_strikethrough: false # if true, removes content enclosed in <s> or <del> tags
+
+      kill_tags: # List of HTML tags whose content will be completely removed
+        - script # Example: remove all script tags and their content
+        - style  # Example: remove all style tags and their content
+        # - pre
+        # - ins.new
+        # - p.admonition-title
+
+      # --- Theme Handling ---
+      # theme_handler_path: "path/to/my_custom_theme_handler.py" # Path to a custom theme handler script
+                                                              # See docs/theme-handler/cinder.py for an example.
+```
+
+### Output Files
+
+- If `markdown` is `false` (default), the plugin writes the plain-text representation of each page as a `.txt` file in the same directory as the original HTML page within your `site_dir`.
+- If `markdown` is `true`, it writes the Markdown representation as an `.md` file, also in the same relative path within your `site_dir`.
+
+The plugin also attempts to add a `<link rel="alternate" ...>` tag to the HTML `<head>` of each page, pointing to its corresponding text or Markdown export.
+
+## Dependencies
+
+This plugin relies on several key libraries:
+
+- [`html22text`](https://github.com/twardoch/html22text): For the core HTML to text/Markdown conversion.
+- `BeautifulSoup4`: For parsing and manipulating HTML, especially within theme handlers.
+- `MkDocs`: The 당연하지! (naturally!)
+
+## Contributing
+
+Contributions are welcome! If you find a bug, have a feature request, or want to improve the plugin:
+
+1.  Please check the [issue tracker](https://github.com/twardoch/mkdocs-text-export-plugin/issues) to see if your concern has already been reported.
+2.  If not, open a new issue.
+3.  Pull requests are greatly appreciated. For larger changes, please open an issue first to discuss the proposed changes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
+The development of this plugin was inspired by and based on the foundational work of several other projects and individuals:
+
+- [mkdocs-pdf-export-plugin](https://github.com/zhaoterryy/mkdocs-pdf-export-plugin/) by [Terry Zhao](https://github.com/zhaoterryy)
+- The work of [Stephan Hauser][shauser]
+- [mkdocs-awesome-pages-plugin][awesome-pages-plugin] by [Lukas Geiter][lukasgeiter]
+
+This version has been further developed and may include significant modifications from the original concepts.
+</file>
+
+<file path="setup.py">
+from setuptools import find_packages, setup
+
+setup(
+    name="mkdocs-text-export-plugin",
+    version="1.0.0",
+    description="An MkDocs plugin to export content pages as plain-text or Markdown files",
+    long_description="The text-export plugin will export all Markdown pages in your MkDocs repository as plain-text or Markdown files",
+    keywords="mkdocs txt plaintext markdown export",
+    url="https://github.com/twardoch/mkdocs-text-export-plugin",
+    author="Adam Twardoch",
+    author_email="adam+github@twardoch.com",
+    license="MIT",
+    python_requires=">=3.10",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.10",
+    ],
+    packages=find_packages(exclude=["tests*"]),
+    entry_points={
+        "mkdocs.plugins": [
+            "text-export = mkdocs_text_export_plugin.plugin:MdTxtExportPlugin"
+        ]
+    },
+)
+</file>
+
+<file path="docs/theme-handler/cinder.py">
+# This is an EXAMPLE custom theme handler for mkdocs-text-export-plugin.
+# It demonstrates the structure you would use to create your own.
+#
+# To use a custom handler:
+# 1. Create a Python file like this one.
+# 2. Place it in your MkDocs project (e.g., in a 'theme_handlers' directory).
+# 3. In your mkdocs.yml, configure the plugin:
+#    plugins:
+#      - text-export:
+#          theme_handler_path: "theme_handlers/your_custom_handler.py"
+
+from bs4 import BeautifulSoup
+
+
+def get_stylesheet() -> str:
+    return """
+    body > .container {
+        margin-top: -100px;
+    }
+
+    @page {
+        @bottom-left {
+            content: counter(__pgnum__);
+        }
+        size: letter;
+    }
+    
+    @media print {
+        .noprint {
+            display: none;
+        }
+    }
+    """
+    soup = BeautifulSoup(html, "html.parser")
+
+    # --- Example Modifications (adapt these to your specific theme) ---
+
+    # Example 1: Remove a specific navigation bar if it exists
+    # nav_element = soup.find("nav", class_="main-navigation")
+    # if nav_element:
+    #     print(f"INFO: Custom theme handler removing '.main-navigation'") # Example logging
+    #     nav_element.decompose()
+
+    # Example 2: Remove a common MkDocs theme footer
+    # footer_element = soup.find("footer", class_="md-footer")
+    # if footer_element:
+    #     print(f"INFO: Custom theme handler removing '.md-footer'")
+    #     footer_element.decompose()
+
+    # Example 3: Remove all <script> and <style> tags
+    # for tag_name in ["script", "style"]:
+    #     for tag in soup.find_all(tag_name):
+    #         tag.decompose()
+
+    # You can add more sophisticated logic to find and remove or alter elements
+    # specific to your theme to improve the text/Markdown output.
+
+    return str(soup)
+
+
+
+def modify_html(html: str, href: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    sm_wrapper = soup.new_tag("small")
+
+    a = soup.new_tag("a", href=href, title="Text export", download=None)
+    a["class"] = "txt-download"
+    a.string = "Open text"
+
+    return str(soup)
+
+    return str(soup)
+</file>
+
+<file path="requirements.txt">
+mkdocs>=1.3.0
+html2text
+beautifulsoup4>=4.0.0
+git+https://github.com/twardoch/html22text
+</file>
+
+<file path="mkdocs_text_export_plugin/plugin.py">
+import logging
+import os
+from timeit import default_timer as timer
+
+from mkdocs.config import config_options
+from mkdocs.plugins import BasePlugin
+
+
+class MdTxtExportPlugin(BasePlugin):
+    config_scheme = (
+        ("verbose", config_options.Type(bool, default=False)),
+        ("enabled_if_env", config_options.Type(str, default=None)), # Allow None
+        ("markdown", config_options.Type(bool, default=False)),
+        ("plain_tables", config_options.Type(bool, default=False)),
+        ("open_quote", config_options.Type(str, default="“")),
+        ("close_quote", config_options.Type(str, default="”")),
+        ("default_image_alt", config_options.Type(str, default="")),
+        ("hide_strikethrough", config_options.Type(bool, default=False)),
+        ("kill_tags", config_options.Type(list, default=[])),
+        ("theme_handler_path", config_options.Type(str, default="")),
+    )
+
+    def __init__(self):
+        self.renderer = None
+        self.enabled = True
+        self.markdown = False
+        self.file_ext = "txt"
+        self.num_files = 0
+        self.num_errors = 0
+        self.total_time = 0
+
+    def on_config(self, config):
+        # Access plugin config via self.config, not config argument
+        if self.config["enabled_if_env"]:
+            env_name = self.config["enabled_if_env"]
+            self.enabled = os.environ.get(env_name) == "1"
+            if not self.enabled:
+                # Ensure logging is available here
+                log = logging.getLogger(__name__)
+                log.warning(
+                    f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
+                )
+                return # Return None to disable plugin
+
+        self.markdown = self.config["markdown"]
+        if self.markdown:
+            self.file_ext = "md"
+
+        import logging
+
+        log = logging.getLogger(__name__)
+        if self.config["verbose"]:
+            log.setLevel(logging.DEBUG)
+        else:
+            log.setLevel(logging.ERROR)
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        return config
+
+    def on_nav(self, nav, config, files):
+        if not self.enabled:
+            return nav
+
+        from .renderer import Renderer
+
+        self.renderer = Renderer(
+            theme=config["theme"].name,
+            theme_handler_path=self.config["theme_handler_path"],
+            markdown=self.markdown,
+            plain_tables=self.config["plain_tables"],
+            open_quote=self.config["open_quote"],
+            close_quote=self.config["close_quote"],
+            default_image_alt=self.config["default_image_alt"],
+            hide_strikethrough=self.config["hide_strikethrough"],
+            kill_tags=self.config["kill_tags"],
+            file_ext=self.file_ext,
+        )
+
+        self.renderer.pages = [None] * len(nav.pages)
+        for page in nav.pages:
+            self.renderer.page_order.append(page.file.url)
+
+        return nav
+
+    def on_post_page(self, output_content, page, config):
+        if not self.enabled:
+            return output_content
+
+        start = timer()
+
+        self.num_files += 1
+
+        try:
+            abs_dest_path = page.file.abs_dest_path
+            src_path = page.file.src_path
+        except AttributeError:
+            # Support for mkdocs <1.0
+            abs_dest_path = page.abs_output_path
+            src_path = page.input_path
+
+        path = os.path.dirname(abs_dest_path)
+        os.makedirs(path, exist_ok=True)
+
+        filename = os.path.splitext(os.path.basename(src_path))[0]
+
+        from weasyprint import urls
+
+        base_url = urls.path2url(os.path.join(path, filename))
+        txt_file = f"{filename}.{self.file_ext}"
+
+        try:
+            self.renderer.write_txt(
+                output_content, base_url, os.path.join(path, txt_file)
+            )
+            output_content = self.renderer.add_link(output_content, txt_file)
+        except Exception as e:
+            logging.error(f"Error converting {src_path} to text: {e}")
+            self.num_errors += 1
+
+        end = timer()
+        self.total_time += end - start
+
+        return output_content
+
+    def on_post_build(self, config):
+        if not self.enabled:
+            return
+
+        logging.info(
+            f"Converting {self.num_files} files to text took {self.total_time:.1f}s"
+        )
+        if self.num_errors > 0:
+            logging.error(f"{self.num_errors} conversion errors occurred (see above)")
+</file>
+
+<file path="mkdocs_text_export_plugin/renderer.py">
+import logging
+import os
+from importlib import import_module
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+
+from html22text import html22text
+
+from .themes import generic as generic_theme
+
+
+class Renderer:
+    def __init__(
+        self,
+        theme: str,
+        theme_handler_path: str = None, # type: ignore
+        markdown: bool = False,
+        plain_tables: bool = False,
+        open_quote: str = "“",
+        close_quote: str = "”",
+        default_image_alt: str = "",
+        hide_strikethrough: bool = False,
+        kill_tags: list = [], # type: ignore
+        file_ext: str = "txt",
+    ):
+        self.page_order: list = []
+        self.pages: list = []
+        self.markdown: bool = markdown
+        self.plain_tables: bool = plain_tables
+        self.open_quote: str = open_quote
+        self.close_quote: str = close_quote
+        self.default_image_alt: str = default_image_alt
+        self.hide_strikethrough: bool = hide_strikethrough
+        self.kill_tags: list = kill_tags
+        self.theme = self._load_theme_handler(theme, theme_handler_path)
+        self.file_ext: str = file_ext
+
+    def write_txt(self, content: str, base_url: str, filename: str):
+        Path(filename).write_text(self.render_doc(content, base_url))
+
+    def render_doc(self, content: str, base_url: str = ""):
+        return html22text(
+            html=content,
+            markdown=self.markdown,
+            base_url=base_url,
+            plain_tables=self.plain_tables,
+            open_quote=self.open_quote,
+            close_quote=self.close_quote,
+            default_image_alt=self.default_image_alt,
+            kill_strikethrough=self.hide_strikethrough,
+            kill_tags=self.kill_tags,
+            file_ext=self.file_ext,
+        )
+
+    def add_doc(self, content: str, base_url: str, rel_url: str):
+        pos = self.page_order.index(rel_url)
+        self.pages[pos] = (content, base_url, rel_url)
+
+    def add_link(self, content: str, filename: str):
+        return self.theme.modify_html(content, filename)
+
+    @staticmethod
+    def _load_theme_handler(theme: str, custom_handler_path: str = None): # type: ignore
+        module_name = "." + (theme or "generic").replace("-", "_")
+
+        if custom_handler_path:
+            try:
+                spec = spec_from_file_location(
+                    module_name, os.path.join(os.getcwd(), custom_handler_path)
+                )
+                mod = module_from_spec(spec) # type: ignore
+                spec.loader.exec_module(mod) # type: ignore
+                return mod
+            except FileNotFoundError as e:
+                logging.warning(
+                    f'Could not load theme handler {theme} from custom directory "{custom_handler_path}": {e}'
+                )
+
+        try:
+            return import_module(module_name, "mkdocs_text_export_plugin.themes")
+        except ImportError as e:
+            logging.warning(f"Could not load theme handler {theme}: {e}")
+            return generic_theme
+</file>
+
+</files>
