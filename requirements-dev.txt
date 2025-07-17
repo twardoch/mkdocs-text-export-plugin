@@ -4,5 +4,7 @@ flake8
 black
 mypy
 mkdocs
+build
+twine
 # Dependencies for testing themes
 mkdocs-material

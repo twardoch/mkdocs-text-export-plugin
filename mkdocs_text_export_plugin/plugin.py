@@ -9,7 +9,7 @@ from mkdocs.plugins import BasePlugin
 class MdTxtExportPlugin(BasePlugin):
     config_scheme = (
         ("verbose", config_options.Type(bool, default=False)),
-        ("enabled_if_env", config_options.Type(str, default=None)), # Allow None
+        ("enabled_if_env", config_options.Type(str, default=None)),  # Allow None
         ("markdown", config_options.Type(bool, default=False)),
         ("plain_tables", config_options.Type(bool, default=False)),
         ("open_quote", config_options.Type(str, default="“")),
@@ -40,13 +40,11 @@ class MdTxtExportPlugin(BasePlugin):
                 log.warning(
                     f"Text export is disabled (set environment variable {env_name} to 1 to enable)"
                 )
-                return # Return None to disable plugin
+                return  # Return None to disable plugin
 
         self.markdown = self.config["markdown"]
         if self.markdown:
             self.file_ext = "md"
-
-        import logging
 
         log = logging.getLogger(__name__)
         if self.config["verbose"]:
@@ -104,9 +102,11 @@ class MdTxtExportPlugin(BasePlugin):
 
         filename = os.path.splitext(os.path.basename(src_path))[0]
 
-        from weasyprint import urls
+        from pathlib import Path
+        from urllib.parse import urljoin
+        from urllib.request import pathname2url
 
-        base_url = urls.path2url(os.path.join(path, filename))
+        base_url = pathname2url(os.path.join(path, filename))
         txt_file = f"{filename}.{self.file_ext}"
 
         try:

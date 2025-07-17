@@ -13,14 +13,14 @@ class Renderer:
     def __init__(
         self,
         theme: str,
-        theme_handler_path: str = None, # type: ignore
+        theme_handler_path: str = None,  # type: ignore
         markdown: bool = False,
         plain_tables: bool = False,
         open_quote: str = "“",
         close_quote: str = "”",
         default_image_alt: str = "",
         hide_strikethrough: bool = False,
-        kill_tags: list = [], # type: ignore
+        kill_tags: list = [],  # type: ignore
         file_ext: str = "txt",
     ):
         self.page_order: list = []
@@ -39,17 +39,21 @@ class Renderer:
         Path(filename).write_text(self.render_doc(content, base_url))
 
     def render_doc(self, content: str, base_url: str = ""):
+        # Convert kill_tags list to comma-separated string if needed
+        kill_tags_str = None
+        if self.kill_tags:
+            kill_tags_str = ",".join(self.kill_tags)
+
         return html22text(
-            html=content,
+            html_content=content,
             markdown=self.markdown,
             base_url=base_url,
-            plain_tables=self.plain_tables,
             open_quote=self.open_quote,
             close_quote=self.close_quote,
             default_image_alt=self.default_image_alt,
             kill_strikethrough=self.hide_strikethrough,
-            kill_tags=self.kill_tags,
-            file_ext=self.file_ext,
+            kill_tags=kill_tags_str,
+            file_ext_override=self.file_ext if self.markdown else "",
         )
 
     def add_doc(self, content: str, base_url: str, rel_url: str):
@@ -60,7 +64,7 @@ class Renderer:
         return self.theme.modify_html(content, filename)
 
     @staticmethod
-    def _load_theme_handler(theme: str, custom_handler_path: str = None): # type: ignore
+    def _load_theme_handler(theme: str, custom_handler_path: str = None):  # type: ignore
         module_name = "." + (theme or "generic").replace("-", "_")
 
         if custom_handler_path:
@@ -68,8 +72,8 @@ class Renderer:
                 spec = spec_from_file_location(
                     module_name, os.path.join(os.getcwd(), custom_handler_path)
                 )
-                mod = module_from_spec(spec) # type: ignore
-                spec.loader.exec_module(mod) # type: ignore
+                mod = module_from_spec(spec)  # type: ignore
+                spec.loader.exec_module(mod)  # type: ignore
                 return mod
             except FileNotFoundError as e:
                 logging.warning(
