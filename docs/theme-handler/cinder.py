@@ -58,7 +58,6 @@ def get_stylesheet() -> str:
     return str(soup)
 
 
-
 def modify_html(html: str, href: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     sm_wrapper = soup.new_tag("small")

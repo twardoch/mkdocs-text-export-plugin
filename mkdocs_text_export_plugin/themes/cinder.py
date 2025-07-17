@@ -16,7 +16,7 @@ def modify_html(html: str, href: str) -> str:
 
     sm_wrapper.append(a)
     if soup.body:
-        footer = getattr(soup.body, 'footer', None)
+        footer = getattr(soup.body, "footer", None)
         if footer:
             footer.insert(0, sm_wrapper)
 

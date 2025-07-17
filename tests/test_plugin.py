@@ -50,6 +50,7 @@ def plugin(plugin_config):
 def mkdocs_config():
     """Fixture for a base MkDocs config."""
     conf = Config(CONFIG_SCHEME)
+
     # Users would define plugin configs in their mkdocs.yml like:
     # plugins:
     #   - text-export:
@@ -61,14 +62,18 @@ def mkdocs_config():
         def __init__(self, name):
             self.name = name
 
-    conf.load_dict({"theme": MockTheme("mkdocs")})  # Basic mkdocs config with theme object
+    conf.load_dict(
+        {"theme": MockTheme("mkdocs")}
+    )  # Basic mkdocs config with theme object
     return conf
 
 
 def test_on_config_defaults(plugin, mkdocs_config):
     """Test that the plugin loads default configurations correctly."""
     # plugin.config is already loaded by the plugin fixture
-    result = plugin.on_config(mkdocs_config) # Call on_config with the main mkdocs_config
+    result = plugin.on_config(
+        mkdocs_config
+    )  # Call on_config with the main mkdocs_config
     assert plugin.config["markdown"] is False
     assert plugin.config["plain_tables"] is False
     assert plugin.config["open_quote"] == "“"
@@ -107,7 +112,7 @@ def test_on_config_enabled_if_env_set(plugin_config, mkdocs_config, monkeypatch)
 
 def test_on_config_enabled_if_env_not_set(plugin_config, mkdocs_config, monkeypatch):
     """Test that the plugin is disabled when the specified environment variable is not set."""
-    monkeypatch.delenv("DISABLE_EXPORT", raising=False) # Ensure it's not set
+    monkeypatch.delenv("DISABLE_EXPORT", raising=False)  # Ensure it's not set
     plugin_config["enabled_if_env"] = "DISABLE_EXPORT"
     plugin = MdTxtExportPlugin()
     plugin.load_config(plugin_config)
@@ -140,7 +145,7 @@ class MockFile:
 
 
 @pytest.fixture
-def mock_nav_fixture(tmp_path): # Renamed to avoid conflict with MockNav class
+def mock_nav_fixture(tmp_path):  # Renamed to avoid conflict with MockNav class
     pages = [
         MockPage(
             "Home",
@@ -162,7 +167,7 @@ def test_on_nav(plugin, mock_nav_fixture, mkdocs_config):
     """Test the on_nav method."""
     plugin.on_config(mkdocs_config)  # Ensure plugin is configured
     # Ensure the theme object has a 'name' attribute
-    if not hasattr(mkdocs_config["theme"], 'name'):
+    if not hasattr(mkdocs_config["theme"], "name"):
         mkdocs_config["theme"].name = "mkdocs"
 
     result_nav = plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
@@ -191,7 +196,7 @@ def test_on_post_page_creates_file(plugin, tmp_path, mkdocs_config, mock_nav_fix
     """Test that on_post_page creates a text file."""
     # Configure plugin and prepare renderer via on_nav
     plugin.on_config(mkdocs_config)
-    if not hasattr(mkdocs_config["theme"], 'name'):
+    if not hasattr(mkdocs_config["theme"], "name"):
         mkdocs_config["theme"].name = "mkdocs"
     plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
 
@@ -204,30 +209,31 @@ def test_on_post_page_creates_file(plugin, tmp_path, mkdocs_config, mock_nav_fix
     output_dir.mkdir(parents=True, exist_ok=True)
     page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
 
-
-    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+    output_file_path = (
+        output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+    )
 
     plugin.on_post_page(page_content, page_to_test, mkdocs_config)
 
     assert output_file_path.exists()
-    # Adjusted expectation: html22text with generic theme might not add '##' for H1 by default
-    # and might handle newlines differently or have subtle variations.
-    # The key is that the content is present.
-    # For plain text, html22text default might be:
-    # Home
-    # This is a test.
-    expected_text_content = f"{page_to_test.title}\n\nThis is a test."
-    assert output_file_path.read_text().replace('\r\n', '\n').strip() == expected_text_content.strip()
+    # html22text outputs markdown-style formatting even in plain text mode
+    expected_text_content = f"# {page_to_test.title}\n\nThis is a test."
+    assert (
+        output_file_path.read_text().replace("\r\n", "\n").strip()
+        == expected_text_content.strip()
+    )
 
 
-def test_on_post_page_markdown_output(plugin_config, tmp_path, mkdocs_config, mock_nav_fixture):
+def test_on_post_page_markdown_output(
+    plugin_config, tmp_path, mkdocs_config, mock_nav_fixture
+):
     """Test that on_post_page creates a markdown file when markdown=True."""
     plugin_config["markdown"] = True
     plugin = MdTxtExportPlugin()
     plugin.load_config(plugin_config)
 
     plugin.on_config(mkdocs_config)
-    if not hasattr(mkdocs_config["theme"], 'name'):
+    if not hasattr(mkdocs_config["theme"], "name"):
         mkdocs_config["theme"].name = "mkdocs"
     plugin.on_nav(mock_nav_fixture, mkdocs_config, files=None)
 
@@ -238,27 +244,23 @@ def test_on_post_page_markdown_output(plugin_config, tmp_path, mkdocs_config, mo
     output_dir.mkdir(parents=True, exist_ok=True)
     page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
 
-    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+    output_file_path = (
+        output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
+    )
 
     plugin.on_post_page(page_content, page_to_test, mkdocs_config)
 
     assert output_file_path.exists()
     assert plugin.file_ext == "md"
-    # html2text with markdown=True will produce something like:
-    # # Test Page
-    #
-    # This is a test with [a link](http://example.com).
-    # html22text default for markdown might be:
-    # # Home
-    # This is a тест with [a link](<http://example.com>).
-    # Note the angle brackets for the URL if html22text adds them.
-    expected_md_content = f"# {page_to_test.title}\n\nThis is a тест with [a link](<{page_to_test.file.url}>)."
-    # Let's be more precise with the URL from the page object if that's what html22text would use.
-    # However, the input HTML has 'http://example.com'.
-    # The previous failing test showed <http://example.com>
-    expected_md_content = f"# {page_to_test.title}\n\nThis is a тест with [a link](<http://example.com>).\n"
+    # html22text outputs angle brackets around URLs in markdown mode
+    expected_md_content = (
+        f"# {page_to_test.title}\n\nThis is a тест with [a link](<http://example.com>)."
+    )
     # Normalize newlines and strip whitespace for comparison
-    assert output_file_path.read_text().replace('\r\n', '\n').strip() == expected_md_content.strip()
+    assert (
+        output_file_path.read_text().replace("\r\n", "\n").strip()
+        == expected_md_content.strip()
+    )
 
 
 def test_on_post_page_disabled(plugin_config, tmp_path, mkdocs_config, monkeypatch):
@@ -283,9 +285,11 @@ def test_on_post_page_disabled(plugin_config, tmp_path, mkdocs_config, monkeypat
     # Ensure output directory for the mock page exists, even if not used
     (tmp_path / "site").mkdir(parents=True, exist_ok=True)
 
-    output_file_path = tmp_path / "site" / f"{Path(page.file.src_path).stem}.{plugin.file_ext}"
+    output_file_path = (
+        tmp_path / "site" / f"{Path(page.file.src_path).stem}.{plugin.file_ext}"
+    )
 
-    plugin.renderer = None # Renderer would not have been initialized
+    plugin.renderer = None  # Renderer would not have been initialized
 
     result_content = plugin.on_post_page(page_content, page, mkdocs_config)
 
