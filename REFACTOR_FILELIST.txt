@@ -1,0 +1,12 @@
+48	./llms.txt
+15	./README.md
+13	./PLAN.md
+12	./tests/test_plugin.py
+4	./mkdocs_text_export_plugin/plugin.py
+4	./TODO.md
+4	./docs/docs/options.md
+4	./docs/docs/theme_handlers.md
+3	./mkdocs_text_export_plugin/renderer.py
+3	./docs/docs/index.md
+2	./mkdocs_text_export_plugin/themes/material.py
+2	./docs/theme-handler/cinder.py
