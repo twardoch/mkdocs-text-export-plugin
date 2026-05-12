@@ -8,9 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Renamed PyPI distribution to `vexy-mkdocs-text-export` (was `mkdocs-text-export-plugin`).
+- Migrated build to `hatchling` + `hatch-vcs` with VCS-derived version (`mkdocs_text_export_plugin/__version__.py`, gitignored).
+- `requires-python` bumped to `>=3.12`; repo URLs moved to `vexyart` org.
+- `__init__.py` now imports `__version__` from the generated module instead of shelling out to `version.py`.
+
+### Removed
+- `setup.py` shim, `version.py`, `requirements.txt`, `requirements-dev.txt`.
+
+### Added
+- `build.sh` / `publish.sh` convention scripts.
+
+> Note: PyPI publish is blocked until `html22text` (currently a `git+https` dependency) is itself published to PyPI.
+
+### Changed (earlier)
 - Cleaned up code structure and removed redundant imports
 - Simplified theme handler implementations
-- Streamlined setup.py dependencies and configuration
 
 ## [1.0.0] - 2025-06-23
 

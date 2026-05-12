@@ -130,3 +130,6 @@ dmypy.json
 
 .DS_Store
 
+
+# hatch-vcs generated version file
+mkdocs_text_export_plugin/__version__.py

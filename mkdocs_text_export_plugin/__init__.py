@@ -1,23 +1,9 @@
-#!/usr/bin/env python3
-"""
-MkDocs Text Export Plugin
-
-An MkDocs plugin to export content pages as plain-text or Markdown files.
-"""
-
-import os
-import sys
-from pathlib import Path
-
-# Add parent directory to path so we can import version
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# this_file: mkdocs_text_export_plugin/__init__.py
+"""MkDocs Text Export Plugin — export content pages as plain-text or Markdown files."""
 
 try:
-    from version import get_version
-
-    __version__ = get_version()
-except ImportError:
-    # Fallback version if version.py is not available
-    __version__ = "1.0.0"
+    from mkdocs_text_export_plugin.__version__ import __version__
+except ImportError:  # editable install before hatch-vcs has run
+    __version__ = "0.0.0+local"
 
 __all__ = ["__version__"]

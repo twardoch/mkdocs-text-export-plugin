@@ -35,7 +35,7 @@ This plugin is ideal for:
 Install the plugin using pip:
 
 ```bash
-pip install mkdocs-text-export-plugin
+pip install vexy-mkdocs-text-export
 ```
 
 Ensure you have MkDocs installed as well.
