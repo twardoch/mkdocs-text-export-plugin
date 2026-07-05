@@ -133,3 +133,6 @@ dmypy.json
 
 # hatch-vcs generated version file
 mkdocs_text_export_plugin/__version__.py
+
+# Generated codebase snapshot
+llms.txt

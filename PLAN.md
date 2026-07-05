@@ -1,5 +1,12 @@
 # MkDocs Text Export Plugin - Improvement Plan
 
+> **Status (2026 modernization pass — complete):** CI + release workflows added,
+> full type hints/docstrings, stale test removed, theme + `mkdocs build` integration
+> tests added (88% coverage, ruff + mypy clean), docs converted to Jekyll, README
+> rewritten, icon generated. Remaining open items live in `TODO.md`; the main one is
+> unblocking PyPI publish once `html22text` ships to PyPI. The phase notes below are
+> retained as historical context.
+
 ## Executive Summary
 
 This document outlines a comprehensive plan to improve the mkdocs-text-export-plugin, making it more stable, elegant, and easily deployable. The improvements are organized into phases, with immediate fixes taking priority, followed by enhancements and new features.

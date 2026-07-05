@@ -41,6 +41,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
     "ruff>=0.6",
+    "mypy>=1.8",
     "mkdocs-material",
 ]
 
@@ -88,3 +89,14 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
+# MkDocs and the html22text fork ship without type stubs.
+[[tool.mypy.overrides]]
+module = ["mkdocs.*", "html22text.*"]
+ignore_missing_imports = true

@@ -1,7 +1,8 @@
-import pytest
 from pathlib import Path
-from mkdocs.config import Config
-from mkdocs.config import config_options
+
+import pytest
+from mkdocs.config import Config, config_options
+
 from mkdocs_text_export_plugin.plugin import MdTxtExportPlugin
 
 # Default config for testing
@@ -62,18 +63,14 @@ def mkdocs_config():
         def __init__(self, name):
             self.name = name
 
-    conf.load_dict(
-        {"theme": MockTheme("mkdocs")}
-    )  # Basic mkdocs config with theme object
+    conf.load_dict({"theme": MockTheme("mkdocs")})  # Basic mkdocs config with theme object
     return conf
 
 
 def test_on_config_defaults(plugin, mkdocs_config):
     """Test that the plugin loads default configurations correctly."""
     # plugin.config is already loaded by the plugin fixture
-    result = plugin.on_config(
-        mkdocs_config
-    )  # Call on_config with the main mkdocs_config
+    result = plugin.on_config(mkdocs_config)  # Call on_config with the main mkdocs_config
     assert plugin.config["markdown"] is False
     assert plugin.config["plain_tables"] is False
     assert plugin.config["open_quote"] == "“"
@@ -209,9 +206,7 @@ def test_on_post_page_creates_file(plugin, tmp_path, mkdocs_config, mock_nav_fix
     output_dir.mkdir(parents=True, exist_ok=True)
     page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
 
-    output_file_path = (
-        output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
-    )
+    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
 
     plugin.on_post_page(page_content, page_to_test, mkdocs_config)
 
@@ -219,14 +214,11 @@ def test_on_post_page_creates_file(plugin, tmp_path, mkdocs_config, mock_nav_fix
     # html22text outputs markdown-style formatting even in plain text mode
     expected_text_content = f"# {page_to_test.title}\n\nThis is a test."
     assert (
-        output_file_path.read_text().replace("\r\n", "\n").strip()
-        == expected_text_content.strip()
+        output_file_path.read_text().replace("\r\n", "\n").strip() == expected_text_content.strip()
     )
 
 
-def test_on_post_page_markdown_output(
-    plugin_config, tmp_path, mkdocs_config, mock_nav_fixture
-):
+def test_on_post_page_markdown_output(plugin_config, tmp_path, mkdocs_config, mock_nav_fixture):
     """Test that on_post_page creates a markdown file when markdown=True."""
     plugin_config["markdown"] = True
     plugin = MdTxtExportPlugin()
@@ -244,9 +236,7 @@ def test_on_post_page_markdown_output(
     output_dir.mkdir(parents=True, exist_ok=True)
     page_to_test.file.abs_dest_path = str(output_dir / page_to_test.file.url)
 
-    output_file_path = (
-        output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
-    )
+    output_file_path = output_dir / f"{Path(page_to_test.file.src_path).stem}.{plugin.file_ext}"
 
     plugin.on_post_page(page_content, page_to_test, mkdocs_config)
 
@@ -257,10 +247,7 @@ def test_on_post_page_markdown_output(
         f"# {page_to_test.title}\n\nThis is a тест with [a link](<http://example.com>)."
     )
     # Normalize newlines and strip whitespace for comparison
-    assert (
-        output_file_path.read_text().replace("\r\n", "\n").strip()
-        == expected_md_content.strip()
-    )
+    assert output_file_path.read_text().replace("\r\n", "\n").strip() == expected_md_content.strip()
 
 
 def test_on_post_page_disabled(plugin_config, tmp_path, mkdocs_config, monkeypatch):
@@ -285,9 +272,7 @@ def test_on_post_page_disabled(plugin_config, tmp_path, mkdocs_config, monkeypat
     # Ensure output directory for the mock page exists, even if not used
     (tmp_path / "site").mkdir(parents=True, exist_ok=True)
 
-    output_file_path = (
-        tmp_path / "site" / f"{Path(page.file.src_path).stem}.{plugin.file_ext}"
-    )
+    output_file_path = tmp_path / "site" / f"{Path(page.file.src_path).stem}.{plugin.file_ext}"
 
     plugin.renderer = None  # Renderer would not have been initialized
 

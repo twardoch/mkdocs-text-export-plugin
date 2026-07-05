@@ -7,7 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- GitHub Actions CI (`ci.yml`): tests on Python 3.12/3.13 across Linux and Windows,
+  a MkDocs-version compatibility matrix (1.5.x and 1.6.x), plus ruff and mypy lint jobs.
+- Release workflow (`release.yml`): builds the package and publishes a GitHub Release
+  on `v*` tags. PyPI publishing is left disabled (commented) until `html22text` ships to PyPI.
+- Integration test that runs a real `mkdocs build` and asserts the `.txt`/`.md` twin
+  and the injected alternate link are produced.
+- Unit tests for every built-in theme handler and the Renderer's handler resolution.
+- Jekyll (Just the Docs) documentation site under `docs/` with home, options, and
+  theme-handler pages.
+- `CLAUDE.md` with per-file `this_file:` map and architecture notes.
+
 ### Changed
+- Full type hints and docstrings across `plugin.py`, `renderer.py`, and all theme
+  handlers; every source file now carries a `this_file:` header.
+- `Renderer.kill_tags` no longer uses a mutable default argument.
+- README rewritten and trimmed to a quick-start-first format with current package
+  name and install instructions.
+- mypy config added to `pyproject.toml`; `mypy` added to the `dev` extra.
+
+### Removed
+- Stale `tests/test_version.py`, which imported the already-removed `version.py`
+  module and broke test collection.
+- Legacy MkDocs-based docs scaffolding (`docs/mkdocs.yml`, `docs/docs/`,
+  `docs/theme-handler/`), replaced by the Jekyll site.
+
+### Changed (packaging, earlier this cycle)
 - Renamed PyPI distribution to `vexy-mkdocs-text-export` (was `mkdocs-text-export-plugin`).
 - Migrated build to `hatchling` + `hatch-vcs` with VCS-derived version (`mkdocs_text_export_plugin/__version__.py`, gitignored).
 - `requires-python` bumped to `>=3.12`; repo URLs moved to `vexyart` org.
