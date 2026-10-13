@@ -10,7 +10,6 @@ change it or debug it.
 | `mkdocs_text_export_plugin/plugin.py` | `MdTxtExportPlugin`, the MkDocs plugin class. Reads the options and handles the build events. |
 | `mkdocs_text_export_plugin/renderer.py` | `Renderer`. Maps the options onto `html22text`, writes the text files and loads the theme handler. |
 | `mkdocs_text_export_plugin/themes/` | Built-in theme handlers: `generic`, `mkdocs`, `material`, `cinder`, `basictheme`. |
-| `mkdocs_text_export_plugin/_vendor/html22text/` | Bundled copy of `html22text` 1.0.0 (MIT). |
 | `mkdocs_text_export_plugin/__version__.py` | Written by `hatch-vcs` at build time. Not in git. |
 
 MkDocs finds the plugin through this entry point in `pyproject.toml`:
@@ -96,15 +95,14 @@ any page failed, `<n> conversion errors occurred (see above)` at `ERROR` level.
 The `plain_tables` option is stored on the `Renderer` but not passed to
 `html22text`, so it has no effect.
 
-## Why `html22text` is bundled
+## The `html22text` dependency
 
-`html22text` is not published on PyPI, and PyPI rejects packages that depend on
-a `git+https` URL. To make the plugin installable from PyPI, its two modules
-(`html22text.py` and `url_utils.py`, from tag `v1.0.0`) are copied into
-`mkdocs_text_export_plugin/_vendor/html22text/` together with their license. The
-command-line entry point of `html22text` is left out, so the plugin does not
-need `fire`.
+`html22text` is a separate MIT-licensed package by the same author, published on
+PyPI from https://github.com/twardoch/html22text. The plugin requires
+`html22text>=1.0.1` and imports its `html22text()` function in
+`mkdocs_text_export_plugin/renderer.py`.
 
-The vendored files are excluded from `ruff` and `mypy`. To update them, copy the
-same two files from a newer `html22text` release and update the version noted in
-`_vendor/html22text/__init__.py`.
+The source at tag `v1.0.2` bundled a copy of `html22text` in
+`mkdocs_text_export_plugin/_vendor/`, because `html22text` was not yet on PyPI
+and PyPI rejects packages that depend on a `git+https` URL. Version 1.0.2 was
+never uploaded to PyPI, and the bundled copy has been removed.

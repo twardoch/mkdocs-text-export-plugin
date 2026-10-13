@@ -739,8 +739,8 @@ tables kept as Markdown.</p>
 <h2 id="how-the-conversion-works">How the conversion works<a class="headerlink" href="#how-the-conversion-works" title="Permanent link">&para;</a></h2>
 <ol>
 <li>MkDocs renders the page to HTML.</li>
-<li>The plugin passes the whole HTML document to a bundled copy of
-   <a href="https://github.com/twardoch/html22text"><code>html22text</code></a>, which removes the
+<li>The plugin passes the whole HTML document to
+   <a href="https://pypi.org/project/html22text/"><code>html22text</code></a>, which removes the
    tags you list in <code>kill_tags</code> and converts the rest with
    <a href="https://pypi.org/project/html2text/"><code>html2text</code></a>.</li>
 <li>The plugin writes the result next to the page.</li>
@@ -762,8 +762,7 @@ footers also end up in the text unless you remove them with <code>kill_tags</cod
 <li><a href="troubleshooting/">Troubleshooting</a>: common problems and their causes.</li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>MIT. The bundled <code>html22text</code> code is also MIT-licensed; its license file ships
-in <code>mkdocs_text_export_plugin/_vendor/html22text/LICENSE</code>.</p>
+<p>MIT. Its <code>html22text</code> dependency is also MIT-licensed.</p>
 
 
 

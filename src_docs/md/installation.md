@@ -5,8 +5,8 @@
 - Python 3.12 or later (`requires-python = ">=3.12"`).
 - MkDocs 1.5.0 or later.
 
-The plugin also installs `html2text` and `beautifulsoup4`. It bundles its own
-copy of `html22text`, so you do not install that separately.
+The plugin also installs [`html22text`](https://pypi.org/project/html22text/)
+1.0.1 or later, which brings in `html2text`, `beautifulsoup4` and `fire`.
 
 ## Install from PyPI
 

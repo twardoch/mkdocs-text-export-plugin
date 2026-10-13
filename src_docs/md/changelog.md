@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (html22text from PyPI)
+- `html22text` is now a regular dependency (`html22text>=1.0.1`), published on PyPI
+  from https://github.com/twardoch/html22text. The bundled copy in
+  `mkdocs_text_export_plugin/_vendor/` is removed. Version 1.0.2, which carried
+  the bundled copy, was tagged but never uploaded to PyPI.
+
+## [1.0.2] - 2026-10-13
+
 ### Changed (PyPI readiness and docs site)
 - `html22text` 1.0.0 is now vendored in `mkdocs_text_export_plugin/_vendor/html22text/`
   (MIT, license included). The `git+https` dependency and `allow-direct-references`

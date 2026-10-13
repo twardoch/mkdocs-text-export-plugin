@@ -44,8 +44,8 @@ and Windows, runs them again against MkDocs 1.5.x and 1.6.x, and runs `ruff` and
 - The version comes from git tags through `hatch-vcs`. Do not add a version
   string to the code. `mkdocs_text_export_plugin/__version__.py` is generated
   and ignored by git.
-- Do not edit files in `mkdocs_text_export_plugin/_vendor/`. Copy a new
-  `html22text` release over them instead (see [Architecture](architecture.md)).
+- Fix conversion bugs in [`html22text`](https://github.com/twardoch/html22text)
+  itself, release it, and raise the `html22text>=` floor in `pyproject.toml`.
 
 ## Build the package and the documentation
 

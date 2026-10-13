@@ -31,10 +31,7 @@ classifiers = [
 keywords = ["mkdocs", "txt", "plaintext", "markdown", "export"]
 dependencies = [
     "mkdocs>=1.5.0",
-    # html22text is vendored in mkdocs_text_export_plugin/_vendor/ (not on PyPI);
-    # these are its runtime dependencies.
-    "html2text>=2020.1.16",
-    "beautifulsoup4>=4.11.1",
+    "html22text>=1.0.1",
 ]
 
 [project.optional-dependencies]
@@ -83,7 +80,6 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["mkdocs_text_export_plugin/_vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -95,12 +91,7 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
 
-# MkDocs and html2text ship without type stubs.
+# MkDocs and html22text ship without type stubs.
 [[tool.mypy.overrides]]
-module = ["mkdocs.*", "html2text.*"]
+module = ["mkdocs.*", "html22text.*"]
 ignore_missing_imports = true
-
-# Vendored third-party code is checked upstream, not here.
-[[tool.mypy.overrides]]
-module = ["mkdocs_text_export_plugin._vendor.*"]
-ignore_errors = true

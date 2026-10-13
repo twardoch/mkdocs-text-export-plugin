@@ -791,8 +791,8 @@ and Windows, runs them again against MkDocs 1.5.x and 1.6.x, and runs <code>ruff
 <li>The version comes from git tags through <code>hatch-vcs</code>. Do not add a version
   string to the code. <code>mkdocs_text_export_plugin/__version__.py</code> is generated
   and ignored by git.</li>
-<li>Do not edit files in <code>mkdocs_text_export_plugin/_vendor/</code>. Copy a new
-  <code>html22text</code> release over them instead (see <a href="../architecture/">Architecture</a>).</li>
+<li>Fix conversion bugs in <a href="https://github.com/twardoch/html22text"><code>html22text</code></a>
+  itself, release it, and raise the <code>html22text&gt;=</code> floor in <code>pyproject.toml</code>.</li>
 </ul>
 <h2 id="build-the-package-and-the-documentation">Build the package and the documentation<a class="headerlink" href="#build-the-package-and-the-documentation" title="Permanent link">&para;</a></h2>
 <p>The root <code>build.sh</code> builds either part or both:</p>

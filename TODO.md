@@ -1,6 +1,13 @@
 <!-- this_file: TODO.md -->
 # TODO
 
+## Pending: PyPI release (2026-10-13)
+
+- [ ] Release to PyPI with `./publish.sh` after `html22text` 1.0.1 is on PyPI. That upload
+      is blocked by PyPI's `429 Too many new projects created` limit; see the html22text
+      repository. Tag `v1.0.2` exists but was never uploaded; the next release (v1.0.3)
+      is the first one that depends on `html22text` from PyPI.
+
 ## Done in the 2026 modernization pass
 - [x] Add CI (`ci.yml`) and release (`release.yml`) workflows.
 - [x] Full type hints + docstrings + `this_file:` headers across the package.
@@ -10,8 +17,6 @@
 - [x] Rewrite README (quick-start first, ≤200 lines); add `CLAUDE.md`.
 
 ## Ready
-- [ ] Publish to PyPI with `./publish.sh`. Unblocked: `html22text` is now vendored in
-      `mkdocs_text_export_plugin/_vendor/html22text/`, so there is no `git+https` dependency.
 - [ ] Decide whether `plain_tables` should be wired through or removed (it is accepted
       but never passed to the converter).
 

@@ -41,8 +41,8 @@ tables kept as Markdown.
 ## How the conversion works
 
 1. MkDocs renders the page to HTML.
-2. The plugin passes the whole HTML document to a bundled copy of
-   [`html22text`](https://github.com/twardoch/html22text), which removes the
+2. The plugin passes the whole HTML document to
+   [`html22text`](https://pypi.org/project/html22text/), which removes the
    tags you list in `kill_tags` and converts the rest with
    [`html2text`](https://pypi.org/project/html2text/).
 3. The plugin writes the result next to the page.
@@ -66,5 +66,4 @@ footers also end up in the text unless you remove them with `kill_tags`. See
 
 ## License
 
-MIT. The bundled `html22text` code is also MIT-licensed; its license file ships
-in `mkdocs_text_export_plugin/_vendor/html22text/LICENSE`.
+MIT. Its `html22text` dependency is also MIT-licensed.

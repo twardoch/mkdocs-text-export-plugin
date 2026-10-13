@@ -70,8 +70,8 @@ jobs:
 
   # PyPI publishing from CI is disabled; releases are uploaded locally by
   # publish.sh (gitnextver tag -> uv build -> uv publish). The former blocker, the
-  # `git+https` html22text dependency, is gone: html22text is now vendored in
-  # mkdocs_text_export_plugin/_vendor/. To publish from CI instead, configure a
+  # `git+https` html22text dependency, is gone: html22text is now a normal PyPI
+  # dependency. To publish from CI instead, configure a
   # PyPI trusted publisher (project vexy-mkdocs-text-export, workflow release.yml,
   # environment pypi) and uncomment this job. `skip-existing` keeps it from
   # failing when publish.sh has already uploaded the same version.

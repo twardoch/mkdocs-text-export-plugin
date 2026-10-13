@@ -40,7 +40,7 @@ The plugin converts the whole HTML page, theme navigation included. Use
 ## How it works
 
 The plugin runs on the final rendered HTML, at the tail of the build, after every
-other plugin has finished. It hands that HTML to a bundled copy of `html22text`,
+other plugin has finished. It hands that HTML to [`html22text`](https://pypi.org/project/html22text/),
 which strips tags and reflows the content into text or Markdown, then writes the
 result next to the page. A per-theme handler adds a small "download as text" link to each page so
 readers can find the export.
@@ -118,7 +118,6 @@ MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Built on [`html22text`](https://github.com/twardoch/html22text) (MIT, vendored in
-`mkdocs_text_export_plugin/_vendor/html22text/` because it is not on PyPI) and inspired by
+Built on [`html22text`](https://github.com/twardoch/html22text) (MIT) and inspired by
 [mkdocs-pdf-export-plugin](https://github.com/zhaoterryy/mkdocs-pdf-export-plugin)
 by Terry Zhao.
