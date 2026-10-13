@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (PyPI readiness and docs site)
+- `html22text` 1.0.0 is now vendored in `mkdocs_text_export_plugin/_vendor/html22text/`
+  (MIT, license included). The `git+https` dependency and `allow-direct-references`
+  are gone, so the package can be uploaded to PyPI. Runtime dependencies are now
+  `mkdocs`, `html2text` and `beautifulsoup4`.
+- Documentation moved from the Jekyll site in `docs/` to ProperDocs + MaterialX:
+  source in `src_docs/md/`, config in `src_docs/mkdocs.yml`, built into `docs/` by
+  `src_docs/build.sh` and the new `Docs` workflow. Published at
+  https://vexy.dev/vexy-mkdocs-text-export/.
+- Docs now describe actual behaviour: text files are named after the source file
+  (`setup.md` → `setup.txt`), the whole HTML page (including theme navigation) is
+  converted unless `kill_tags` removes it, `plain_tables` is ignored, and
+  `hide_strikethrough` has no effect on MkDocs output.
+- `build.sh` builds docs and/or the package (`./build.sh [all|docs|package]`);
+  `publish.sh` tags with `gitnextver`, builds and uploads with `uv publish`.
+
 ### Added
 - GitHub Actions CI (`ci.yml`): tests on Python 3.12/3.13 across Linux and Windows,
   a MkDocs-version compatibility matrix (1.5.x and 1.6.x), plus ruff and mypy lint jobs.

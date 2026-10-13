@@ -9,10 +9,11 @@
 - [x] Convert docs to Jekyll (Just the Docs).
 - [x] Rewrite README (quick-start first, ≤200 lines); add `CLAUDE.md`.
 
-## Blocked
-- [ ] Publish to PyPI. Blocked: `html22text` is a `git+https` dependency and not on
-      PyPI, so PyPI rejects the upload. Publish `html22text` first, then drop the git
-      reference in `pyproject.toml` and re-enable the `publish-pypi` job in `release.yml`.
+## Ready
+- [ ] Publish to PyPI with `./publish.sh`. Unblocked: `html22text` is now vendored in
+      `mkdocs_text_export_plugin/_vendor/html22text/`, so there is no `git+https` dependency.
+- [ ] Decide whether `plain_tables` should be wired through or removed (it is accepted
+      but never passed to the converter).
 
 ## Bigger ideas (not yet scheduled)
 - [ ] Migrate the flat `mkdocs_text_export_plugin/` package to a `src/` layout

@@ -3,19 +3,20 @@
 
 **Your MkDocs site, as plain text. Grep-friendly.**
 
+**Documentation:** https://vexy.dev/vexy-mkdocs-text-export/
+
 Every page MkDocs builds is HTML. This plugin writes a second copy of each page as
-clean plain text or Markdown, right beside the `.html` file — no theme chrome, no
-navigation, no scripts. Feed it to an NLP pipeline, index it for search, or migrate
-the content elsewhere.
+plain text or Markdown, right beside the `.html` file. Feed it to an NLP pipeline,
+index it for search, or migrate the content elsewhere.
 
 ## Visual
 
-<img src="docs/assets/icon.png" alt="A documentation page becoming a plain-text file, with a grep magnifier" width="180">
+<img src="https://vexy.dev/vexy-mkdocs-text-export/assets/icon.png" alt="A documentation page becoming a plain-text file, with a grep magnifier" width="180">
 
 ## Quick start
 
 ```bash
-pip install "git+https://github.com/vexyart/vexy-mkdocs-text-export"
+pip install vexy-mkdocs-text-export
 ```
 
 ```yaml
@@ -29,18 +30,19 @@ plugins:
 mkdocs build
 ```
 
-Now `site/page/index.html` has a sibling `site/page/index.txt`. Want Markdown
-instead? Set `markdown: true`.
+Now `docs/guide/setup.md` produces `site/guide/setup/index.html` and, beside it,
+`site/guide/setup/setup.txt` (the text file is named after the source file). Want
+Markdown instead? Set `markdown: true`.
 
-> **Note:** the plugin depends on [`html22text`](https://github.com/twardoch/html22text),
-> which is not yet on PyPI — hence the `git+https` install above.
+The plugin converts the whole HTML page, theme navigation included. Use
+`kill_tags` (CSS selectors) to drop menus and footers from the text.
 
 ## How it works
 
 The plugin runs on the final rendered HTML, at the tail of the build, after every
-other plugin has finished. It hands that HTML to `html22text`, which strips tags
-and reflows the content into text or Markdown, then writes the result next to the
-page. A per-theme handler adds a small "download as text" link to each page so
+other plugin has finished. It hands that HTML to a bundled copy of `html22text`,
+which strips tags and reflows the content into text or Markdown, then writes the
+result next to the page. A per-theme handler adds a small "download as text" link to each page so
 readers can find the export.
 
 Place `text-export` **last** in your plugin list so it sees the fully processed
@@ -52,12 +54,12 @@ HTML from plugins that run before it.
 plugins:
   - text-export:
       markdown: false          # true → .md output, false → .txt (default)
-      plain_tables: false      # simpler list-style tables in plain text
+      plain_tables: false      # accepted, currently has no effect
       open_quote: "“"          # opening quote for <q> tags
       close_quote: "”"         # closing quote for <q> tags
-      default_image_alt: ""    # replace every image with this text
-      hide_strikethrough: false # drop <s>/<del> content
-      kill_tags:               # tags removed entirely before conversion
+      default_image_alt: ""    # Markdown mode: alt text for images without one
+      hide_strikethrough: false # no effect on MkDocs output; use kill_tags: [del, s]
+      kill_tags:               # CSS selectors removed before conversion
         - script
         - style
       theme_handler_path: ""   # path to a custom theme handler
@@ -66,7 +68,7 @@ plugins:
 ```
 
 Most options pass straight through to `html22text`. See the
-[full options reference](https://vexyart.github.io/vexy-mkdocs-text-export/options)
+[configuration reference](https://vexy.dev/vexy-mkdocs-text-export/configuration/)
 for details.
 
 ### Run only in production
@@ -95,7 +97,7 @@ page. How it does so depends on the theme:
 
 To control placement yourself, point `theme_handler_path` at a Python module that
 exposes `modify_html(html, href) -> str`. See the
-[theme handlers guide](https://vexyart.github.io/vexy-mkdocs-text-export/theme-handlers).
+[theme handlers guide](https://vexy.dev/vexy-mkdocs-text-export/theme-handlers/).
 
 ## Development
 
@@ -116,6 +118,7 @@ MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Built on [`html22text`](https://github.com/twardoch/html22text) and inspired by
+Built on [`html22text`](https://github.com/twardoch/html22text) (MIT, vendored in
+`mkdocs_text_export_plugin/_vendor/html22text/` because it is not on PyPI) and inspired by
 [mkdocs-pdf-export-plugin](https://github.com/zhaoterryy/mkdocs-pdf-export-plugin)
 by Terry Zhao.

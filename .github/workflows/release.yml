@@ -68,10 +68,13 @@ jobs:
           draft: false
           prerelease: false
 
-  # PyPI publishing is intentionally disabled. The package depends on `html22text`
-  # via a direct `git+https` reference, which PyPI rejects on upload. Once
-  # html22text is published to PyPI, drop the git reference in pyproject.toml and
-  # re-enable this job.
+  # PyPI publishing from CI is disabled; releases are uploaded locally by
+  # publish.sh (gitnextver tag -> uv build -> uv publish). The former blocker, the
+  # `git+https` html22text dependency, is gone: html22text is now vendored in
+  # mkdocs_text_export_plugin/_vendor/. To publish from CI instead, configure a
+  # PyPI trusted publisher (project vexy-mkdocs-text-export, workflow release.yml,
+  # environment pypi) and uncomment this job. `skip-existing` keeps it from
+  # failing when publish.sh has already uploaded the same version.
   #
   # publish-pypi:
   #   needs: build
@@ -87,3 +90,5 @@ jobs:
   #         path: dist/
   #     - name: Publish to PyPI
   #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         skip-existing: true

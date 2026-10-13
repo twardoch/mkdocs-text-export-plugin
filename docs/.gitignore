@@ -1,6 +1,0 @@
-# this_file: docs/.gitignore
-_site/
-.jekyll-cache/
-.jekyll-metadata
-Gemfile.lock
-vendor/

@@ -136,3 +136,10 @@ mkdocs_text_export_plugin/__version__.py
 
 # Generated codebase snapshot
 llms.txt
+
+# Repo hygiene (docs/packaging spec)
+.omc/
+.venv/
+.ruff_cache/
+site/
+node_modules/

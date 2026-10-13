@@ -1,9 +1,10 @@
 # this_file: mkdocs_text_export_plugin/renderer.py
 """Convert rendered page HTML to text and load the matching theme handler.
 
-:class:`Renderer` is a thin wrapper around ``html22text``: it maps the plugin's
-config options onto that library's arguments and picks a theme handler that knows
-how to inject the download link for the site's active MkDocs theme.
+:class:`Renderer` is a thin wrapper around ``html22text`` (vendored in
+``_vendor/html22text``): it maps the plugin's config options onto that library's
+arguments and picks a theme handler that knows how to inject the download link
+for the site's active MkDocs theme.
 """
 
 import logging
@@ -13,8 +14,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
 
-from html22text import html22text
-
+from ._vendor.html22text import html22text
 from .themes import generic as generic_theme
 
 log = logging.getLogger(__name__)
